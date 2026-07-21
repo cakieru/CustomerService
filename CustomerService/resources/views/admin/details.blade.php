@@ -203,7 +203,7 @@
                         </div>
 
                         <!-- Reply Input Form Block -->
-                        <form action="{{ route('tickets.reply', 1001) }}" method="POST" class="p-4 border-t border-gray-100 bg-gray-50/50 space-y-3">
+                        <form action="{{ route('admin.support.tickets.reply', $ticket->id) }}" method="POST" class="...">
                             @csrf
                             <!-- Add this hidden input inside the agent form -->
     <input type="hidden" name="sender_type" value="Agent">

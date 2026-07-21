@@ -63,6 +63,7 @@ Route::prefix('customer')->group(function () {
     Route::post('/tickets/{ticket}/reply', [CustomerController::class, 'reply'])->name('customer.tickets.reply');
 });
 
+
 /*
 |--------------------------------------------------------------------------
 | Legacy Ticket Routes (for customer conversation system)
@@ -91,6 +92,9 @@ Route::post('/knowledge-base/{id}/view', [KnowledgeBaseController::class, 'incre
 Route::get('/agent', function () {
     return view('agent');
 })->name('agent');
+
+// Agent Portal - Dashboard List View
+Route::get('/agent', [AdminController::class, 'agentTickets'])->name('agent');
 
 Route::get('/agent/ticket/details', function () {
     return view('details');

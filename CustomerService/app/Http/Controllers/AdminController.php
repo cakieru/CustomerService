@@ -61,7 +61,10 @@ class AdminController extends Controller
             ->take(5)
             ->get();
 
+
         return view('admin.show', compact('ticket', 'admins', 'notifications'));
+
+
     }
 
     /**
@@ -93,6 +96,37 @@ class AdminController extends Controller
             ->get();
 
         return view('admin.tickets.TicketsIndex', compact('tickets', 'notifications'));
+    }
+
+        /**
+     * Agent Portal - Tickets List View (with animations)
+     */
+    public function agentTickets(Request $request)
+    {
+        $query = Ticket::with(['customer', 'agent']);
+
+        if ($request->filled('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+        if ($request->filled('priority') && $request->priority !== 'all') {
+            $query->where('priority', $request->priority);
+        }
+        if ($request->filled('search')) {
+            $query->where(function($q) use ($request) {
+                $q->where('ticket_reference', 'like', '%' . $request->search . '%')
+                  ->orWhere('subject', 'like', '%' . $request->search . '%');
+            });
+        }
+
+        $tickets = $query->orderBy('created_at', 'desc')->get();
+        
+        $notifications = Ticket::with('customer')
+            ->where('status', 'open')
+            ->orderBy('created_at', 'desc')
+            ->take(5)
+            ->get();
+
+        return view('admin.agent', compact('tickets', 'notifications'));
     }
 
     public function updateStatus(Request $request, Ticket $ticket)
