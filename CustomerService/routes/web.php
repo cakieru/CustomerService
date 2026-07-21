@@ -94,7 +94,7 @@ Route::get('/portal', function () {
 
 // Customer Portal - My Tickets List View
 Route::get('/tickets.index', function () {
-    return view('customer.CustomerIndex');
+    return view('tickets'); // Renders tickets.blade.php
 })->name('tickets');
 
 // Customer Portal - Individual Ticket Details View
