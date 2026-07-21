@@ -11,7 +11,8 @@
 <div class="flex flex-col lg:flex-row gap-8">
     
     <div class="flex-grow space-y-6">
-        <form action="{{ route('tickets.store') }}" method="POST">
+        <!-- ENCTYPE ADDED HERE -->
+        <form action="{{ route('tickets.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
             
             <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm mb-6">
@@ -41,8 +42,13 @@
                     <div class="relative">
                         <select name="category" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-600 outline-none appearance-none bg-white" required>
                             <option value="">Select a Category...</option>
+                            <option value="Subscription">Subscription</option>
                             <option value="Shipping & Delivery">Shipping & Delivery</option>
                             <option value="Returns & Refunds">Returns & Refunds</option>
+                            <option value="Account Management">Account Management</option>
+                            <option value="Damaged Product">Damaged Product</option>
+                            <option value="Product Information">Product Information</option>
+                            <option value="Promotion & Discounts">Promotion & Discounts</option>
                         </select>
                         <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -57,9 +63,26 @@
                     <input type="text" name="subject" placeholder="Brief Summary of your issue" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-600 outline-none" required>
                 </div>
 
-                <div class="mb-2">
+                <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Description *</label>
                     <textarea name="description" rows="5" placeholder="Please describe your issue in detail..." class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-600 outline-none resize-none" required></textarea>
+                </div>
+
+                <!-- ATTACHMENT UPLOAD BLOCK -->
+                <div class="mb-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Attachments</label>
+                    <label class="flex flex-col items-center justify-center w-full px-4 py-8 border-2 border-gray-300 border-dashed rounded-xl cursor-pointer hover:bg-gray-50 hover:border-blue-400 transition-all group">
+                        <div class="flex flex-col items-center space-y-2 text-center">
+                            <svg class="w-8 h-8 text-gray-400 group-hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+                            </svg>
+                            <span class="text-sm text-gray-500 font-medium">Click to upload files</span>
+                            <span class="text-xs text-gray-400">PNG, JPG, PDF, DOC up to 10MB each</span>
+                        </div>
+                        <input type="file" name="attachments[]" multiple class="hidden" accept=".jpg,.jpeg,.png,.pdf,.doc,.docx">
+                    </label>
+                    <!-- Live preview of selected files -->
+                    <div id="filePreview" class="mt-3 space-y-2"></div>
                 </div>
             </div>
 
@@ -107,9 +130,29 @@
             </div>
             <h4 class="font-bold text-xl text-gray-900 mb-2">Need quick help?</h4>
             <p class="text-sm text-gray-500 mb-5 leading-relaxed">Search our knowledge base for instant answers to common questions.</p>
-            
         </div>
 
     </div>
 </div>
+
+<script>
+    // Live file preview
+    document.querySelector('input[name="attachments[]"]').addEventListener('change', function(e) {
+        const preview = document.getElementById('filePreview');
+        preview.innerHTML = '';
+        Array.from(e.target.files).forEach(file => {
+            const size = (file.size / 1024 / 1024).toFixed(2);
+            const div = document.createElement('div');
+            div.className = 'flex items-center gap-3 text-xs text-gray-700 bg-gray-50 px-3 py-2.5 rounded-lg border border-gray-200';
+            div.innerHTML = `
+                <svg class="w-4 h-4 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+                </svg>
+                <span class="font-medium truncate">${file.name}</span>
+                <span class="text-gray-400 ml-auto flex-shrink-0">${size} MB</span>
+            `;
+            preview.appendChild(div);
+        });
+    });
+</script>
 @endsection

@@ -72,47 +72,56 @@ class CustomerController extends Controller
      */
     
     public function store(Request $request)
-{
-    // 1. Removed 'priority' from here so Laravel doesn't block the submission
-    $request->validate([
-        'name'        => 'required|string|max:255',
-        'email'       => 'required|email|max:255',
-        'category'    => 'required',
-        'subject'     => 'required|string|max:255',
-        'description' => 'required|string',
-    ]);
+    {
+        $request->validate([
+            'name'        => 'required|string|max:255',
+            'email'       => 'required|email|max:255',
+            'category'    => 'required',
+            'subject'     => 'required|string|max:255',
+            'description' => 'required|string',
+            'attachments.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:10240',
+        ]);
 
-    // 2. Set the default priority internally since the user no longer chooses it
-    $priority = 'low';
+        $priority = 'low';
 
-    // 3. Changed this to read from our internal variable $priority instead of $request
-    $hours = match ($priority) {
-        'high'   => 4, 
-        'medium' => 8, 
-        'low'    => 24, 
-        default  => 24,
-    };
+        $hours = match ($priority) {
+            'high'   => 4, 
+            'medium' => 8, 
+            'low'    => 24, 
+            default  => 24,
+        };
 
-    $user = User::firstOrCreate(
-        ['email' => $request->email],
-        ['name' => $request->name, 'password' => bcrypt('password')]
-    );
+        $user = User::firstOrCreate(
+            ['email' => $request->email],
+            ['name' => $request->name, 'password' => bcrypt('password')]
+        );
 
-    Session::put('customer_id', $user->id);
+        Session::put('customer_id', $user->id);
 
-    Ticket::create([
-        'ticket_reference' => 'TKT-' . rand(1000, 9999),
-        'user_id'          => $user->id,
-        'subject'          => $request->subject,
-        'description'      => $request->description,
-        'category'         => $request->category,
-        'priority'         => $priority, // Passed our internal 'low' value to satisfy the database column
-        'status'           => 'open',
-        'due_date'         => Carbon::now()->addHours($hours),
-    ]);
+        $ticket = Ticket::create([
+            'ticket_reference' => 'TKT-' . rand(1000, 9999),
+            'user_id'          => $user->id,
+            'subject'          => $request->subject,
+            'description'      => $request->description,
+            'category'         => $request->category,
+            'priority'         => $priority,
+            'status'           => 'open',
+            'due_date'         => Carbon::now()->addHours($hours),
+        ]);
 
-    return redirect('/tickets')->with('success', 'Ticket created successfully!');
-}
+        // Handle file attachments
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                $path = $file->store('ticket-attachments', 'public');
+                $ticket->attachments()->create([
+                    'filename' => $file->getClientOriginalName(),
+                    'path'     => $path,
+                ]);
+            }
+        }
+
+        return redirect('/tickets')->with('success', 'Ticket created successfully!');
+    }
 
     /**
      * 5. START LIVE CHAT LOGIC
