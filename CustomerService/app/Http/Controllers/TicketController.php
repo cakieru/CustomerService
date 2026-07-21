@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\DB;
 
 class TicketController extends Controller
 {
-    // A. Ipakita ang lahat ng tickets ng user
+    // A. Ipakita ang lahat ng tickets ng user opo ipakita mo
     public function index()
     {
         // Kukunin ang mga tickets ng kasalukuyang naka-log in na user
