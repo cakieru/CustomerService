@@ -39,7 +39,7 @@ class CustomerController extends Controller
 
         $tickets = $query->latest()->get();
 
-        return view('customer.CustomerIndex', compact('tickets'));
+        return view('customer.CustomerInd', compact('tickets'));
     }
 
     /**

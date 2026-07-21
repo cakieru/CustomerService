@@ -90,7 +90,7 @@ class AdminController extends Controller
             ->take(5)
             ->get();
 
-        return view('admin.tickets.TicketsIndex', compact('tickets', 'notifications'));
+        return view('admin.tickets.TicketsInd', compact('tickets', 'notifications'));
     }
 
     public function updateStatus(Request $request, Ticket $ticket)
