@@ -8,28 +8,61 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Alpine.js (Required for your tab switching) -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@100..1000&display=swap" rel="stylesheet">
+    
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Google Sans Flex', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
 </head>
 <body class="bg-gray-50 flex flex-col min-h-screen text-gray-800">
 <!-- Parin 8:47-->
-    <nav class="bg-white border-b border-gray-200 px-8 py-4 flex justify-between items-center sticky top-0 z-10">
-        <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">
-                🎧
+    <!-- 100% Accurate Header -->
+    <header class="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50 transition-all duration-300">
+    <div class="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
+        
+        <!-- Logo Section -->
+        <a href="{{ route('CustomerPortal') }}" class="flex items-center space-x-3 group cursor-pointer select-none">
+            <!-- Icon Box: Dark Navy Squircle -->
+            <div class="bg-[#0f4c81] text-white p-2.5 rounded-xl shadow-sm group-hover:scale-105 transition-transform duration-300">
+                <!-- Fallback SVG embedded directly so it ALWAYS shows even if Lucide fails -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-headphones">
+                    <path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/>
+                </svg>
             </div>
-            <div>
-                <h1 class="font-bold text-lg leading-tight">Support Center</h1>
-                <p class="text-xs text-gray-500">We're here to help</p>
+            <div class="flex flex-col justify-center">
+                <h1 class="text-base font-bold text-gray-800 leading-tight">Support Center</h1>
+                <p class="text-xs text-gray-400 font-medium">We're here to help</p>
             </div>
-        </div>
-        <div class="flex items-center space-x-6">
-            <a href="{{ route('CustomerPortal') }}" class="font-medium text-gray-500 hover:text-gray-900">Home</a>
-            <a href="{{ route('customer.tickets') }}" class="font-medium text-blue-600 bg-blue-50 px-4 py-2 rounded-lg">My Tickets</a>
-            <a href="{{ route('customer.create') }}" class="bg-blue-600 text-white font-medium px-5 py-2.5 rounded-lg hover:bg-blue-700 transition shadow-sm">+ New Request</a>
-        </div>
-    </nav>
+        </a>
+
+        <!-- Right Navigation -->
+        <nav class="flex items-center space-x-4">
+            <!-- Home Link -->
+            <a href="{{ route('CustomerPortal') }}" class="text-gray-500 hover:text-gray-800 font-medium text-sm transition-colors duration-300">
+                Home
+            </a>
+            
+            <!-- Active Page Pill: My Tickets -->
+            <a href="{{ route('customer.tickets') }}" class="bg-[#f0f4f8] text-[#0f4c81] font-semibold px-4 py-2 rounded-xl text-sm transition-all duration-300 hover:opacity-90">
+                My Tickets
+            </a>
+
+            <!-- Action Button -->
+            <a href="{{ route('customer.create') }}" class="bg-[#0f62fe] hover:bg-[#0052cc] text-white font-semibold px-5 py-2.5 rounded-xl text-sm shadow-sm hover:shadow-md flex items-center space-x-1.5 transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0">
+                + New Request
+            </a>
+        </nav>
+    </div>
+</header>
 
     <main class="flex-grow flex flex-col justify-start py-12 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto w-full">
         
@@ -172,16 +205,16 @@
             @endif
         </div>
 
+        <div class="flex items-center justify-between text-xs text-slate-400 border-t border-slate-200 pt-8 !mt-12">
+            <p>&copy; 2026 Support Center. All rights reserved.</p>
+            <div class="space-x-4">
+                <a href="{{ route('admin.support.dashboard') }}" class="hover:underline">Agent Portal</a>
+                <a href="#" class="hover:text-gray-600 transition">FAQ</a>
+                <a href="#" class="hover:text-gray-600 transition">Terms</a>
+            </div>
+        </div>
     </main>
 
-    <footer class="bg-white border-t border-gray-200 py-6 px-8 flex justify-between items-center text-sm text-gray-500 mt-auto">
-        <p>&copy; 2026 Support Center. All rights reserved.</p>
-        <div class="flex space-x-6">
-            <a href="#" class="hover:text-gray-900">Agent Portal</a>
-            <a href="#" class="hover:text-gray-900">FAQ</a>
-            <a href="#" class="hover:text-gray-900">Terms</a>
-        </div>
-    </footer>
 
 </body>
 </html>
