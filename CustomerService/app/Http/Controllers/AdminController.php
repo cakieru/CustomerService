@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Ticket;
 use App\Models\TicketReply;
 use App\Models\User;
+use App\Services\SlaCalculator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -15,6 +16,13 @@ class AdminController extends Controller
      */
     public function index() 
     {
+        // Update SLA metrics on dashboard load
+        try {
+            SlaCalculator::updateSlaData();
+        } catch (\Exception $e) {
+            \Log::error('SLA Update failed on dashboard: ' . $e->getMessage());
+        }
+
         $summary = [
             'openTickets' => Ticket::where('status', 'open')->count(),
             'inProgress' => Ticket::where('status', 'in-progress')->count(),
@@ -23,26 +31,22 @@ class AdminController extends Controller
         ];
 
         $recentTickets = Ticket::with('customer')->orderBy('created_at', 'desc')->take(5)->get();
-        
+
         $slaAlerts = Ticket::with('agent')
             ->where('status', '!=', 'closed')
             ->where('status', '!=', 'resolved')
             ->where('due_date', '<', now())
             ->get();
 
-        // Fetch the 5 most recent unread/open tickets for the real-time notification drawer
         $notifications = Ticket::with('customer')
             ->where('status', 'open')
             ->orderBy('created_at', 'desc')
             ->take(5)
             ->get();
 
-        // ✨ Matches your exact renamed file: resources/views/admin/dashboard.blade.php
         return view('admin.dashboard', compact('summary', 'recentTickets', 'slaAlerts', 'notifications'));
     }
 
-    //jerard baluyot
-    
     /**
      * Show a Single Ticket Management Panel
      */
@@ -51,14 +55,12 @@ class AdminController extends Controller
         $ticket->load(['customer', 'agent', 'replies.user']);
         $admins = User::where('role', 'admin')->get();
 
-        // Uniform dynamic notification tray data
         $notifications = Ticket::with('customer')
             ->where('status', 'open')
             ->orderBy('created_at', 'desc')
             ->take(5)
             ->get();
 
-        // ✨ Matches your file: resources/views/admin/show.blade.php
         return view('admin.show', compact('ticket', 'admins', 'notifications'));
     }
 
@@ -83,7 +85,7 @@ class AdminController extends Controller
         }
 
         $tickets = $query->orderBy('created_at', 'desc')->paginate(15);
-        
+
         $notifications = Ticket::with('customer')
             ->where('status', 'open')
             ->orderBy('created_at', 'desc')
@@ -96,7 +98,22 @@ class AdminController extends Controller
     public function updateStatus(Request $request, Ticket $ticket)
     {
         $request->validate(['status' => 'required|in:open,in-progress,resolved,closed']);
-        $ticket->update(['status' => $request->status]);
+
+        $status = $request->status;
+        $updateData = ['status' => $status];
+
+        if ($status === 'in-progress' && !$ticket->responded_at) {
+            $updateData['responded_at'] = now();
+        }
+        if ($status === 'resolved' && !$ticket->resolved_at) {
+            $updateData['resolved_at'] = now();
+        }
+
+        $ticket->update($updateData);
+
+        // Update SLA metrics after status change
+        SlaCalculator::updateSlaData();
+
         return back()->with('success', 'Ticket status updated successfully.');
     }
 
@@ -104,6 +121,10 @@ class AdminController extends Controller
     {
         $request->validate(['agent_id' => 'required|exists:users,id']);
         $ticket->update(['agent_id' => $request->agent_id]);
+
+        // Update SLA metrics after assignment
+        SlaCalculator::updateSlaData();
+
         return back()->with('success', 'Ticket assigned successfully.');
     }
 
@@ -118,21 +139,34 @@ class AdminController extends Controller
         ]);
 
         if ($ticket->status === 'open') {
-            $ticket->update(['status' => 'in-progress']);
+            $ticket->update([
+                'status' => 'in-progress',
+                'responded_at' => $ticket->responded_at ?? now(),
+            ]);
         }
+
+        // Update SLA metrics after reply
+        SlaCalculator::updateSlaData();
 
         return back()->with('success', 'Reply posted successfully.');
     }
 
     public function reports()
     {
+        // Update SLA data before showing reports
+        try {
+            SlaCalculator::updateSlaData();
+        } catch (\Exception $e) {
+            \Log::error('SLA Update failed on reports: ' . $e->getMessage());
+        }
+
         $totalResolved = Ticket::where('status', 'resolved')->count();
         $notifications = Ticket::with('customer')
             ->where('status', 'open')
             ->orderBy('created_at', 'desc')
             ->take(5)
             ->get();
-            
+
         return view('admin.reports', compact('totalResolved', 'notifications'));
     }
 }

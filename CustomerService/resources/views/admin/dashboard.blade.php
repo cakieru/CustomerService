@@ -21,7 +21,7 @@
     <!-- Lucide Icons & Alpine.js -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    
+
     <!-- Premium Animations Setup from Agent Blade -->
     <style>
         @keyframes portalFadeInUp {
@@ -81,13 +81,13 @@
                 <a href="{{ route('admin.support.dashboard') }}" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-blue-700 bg-blue-50 rounded-lg transition-all duration-300">
                     <i data-lucide="layout-dashboard" class="w-5 h-5 text-blue-600"></i> Dashboard
                 </a>
-                <a href="{{ route('agent') }}" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 transition-all duration-300">
+                <a href="{{ route('admin.support.tickets.index') }}" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 transition-all duration-300">
                     <i data-lucide="ticket" class="w-5 h-5"></i> Tickets
                 </a>
                 <a href="{{ route('KnowledgeBase') }}" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 transition-all duration-300">
                     <i data-lucide="book-open" class="w-5 h-5"></i> Knowledge Base
                 </a>
-                <a href="{{ route('admin.support.reports') }}" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 transition-all duration-300">
+                <a href="{{ route('sla-reports.index') }}" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 transition-all duration-300">
                     <i data-lucide="bar-chart-3" class="w-5 h-5"></i> SLA Reports
                 </a>
             </nav>
@@ -103,7 +103,7 @@
 
     <!-- RIGHT CONTENT AREA -->
     <div class="flex-1 pl-64 flex flex-col h-screen overflow-hidden relative">
-        
+
         <!-- STICKY HEADER NAVBAR (100% Identical to agent.blade.php) -->
         <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8 sticky top-0 z-20 flex-shrink-0">
             <div class="relative w-96">
@@ -113,7 +113,7 @@
                 </form>
             </div>
             <div class="flex items-center gap-4">
-                
+
                 @php
                     $notifications = \App\Models\Ticket::latest()->take(5)->get();
                 @endphp
@@ -171,13 +171,13 @@
         <!-- MAIN CONTAINER -->
         <main class="p-8 flex-1 overflow-y-auto h-[calc(100vh-4rem)] hide-scrollbar">
             <div class="space-y-6">
-                
+
                 @if(session('success'))
                     <div class="p-4 bg-green-50 border border-green-200 text-green-700 rounded-xl text-xs font-medium shadow-sm">
                         {{ session('success') }}
                     </div>
                 @endif
-                
+
                 <div>
                     <h2 class="text-3xl font-bold text-gray-950 tracking-tight">DASHBOARD</h2>
                     <p class="text-sm text-gray-500 mt-1">Overview of support operations and dynamic real-time live feed indicators</p>
@@ -223,7 +223,7 @@
                 </div>
 
                 <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
-                    
+
                     <div class="bg-white border border-gray-200 rounded-xl shadow-sm flex flex-col overflow-hidden">
                         <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50/50">
                             <h3 class="text-lg font-bold text-gray-900">Recent Tickets</h3>
@@ -269,7 +269,7 @@
                                     </div>
                                     <div class="flex-1">
                                         <p class="text-sm font-bold text-gray-900 truncate max-w-xs">{{ $alert->subject }}</p>
-                                        <p class="text-xs text-gray-500 mt-0.5">Ref: <span class="font-semibold text-gray-700">{{ $alert->ticket_reference }}</span> • Resolution Deadline Breached</p>
+                                        <p class="text-xs text-gray-500 mt-0.5">Ref: <span class="font-semibold text-gray-700">{{ $alert->ticket_reference }}</span> &bull; Resolution Deadline Breached</p>
                                         <p class="text-xs text-gray-400 mt-1">Assigned Agent: <span class="text-gray-600 font-medium">{{ $alert->agent->name ?? 'Unassigned Tier 1' }}</span></p>
                                     </div>
                                 </a>
@@ -286,43 +286,42 @@
 
                 <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm mt-6">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        
-                        <a href="/tickets" class="dash-card-hover flex items-center space-x-4 p-4 border border-gray-100 hover:border-blue-200 hover:bg-blue-50/30 rounded-xl transition-all group">
+
+                        <a href="{{ route('admin.support.tickets.index') }}" class="dash-card-hover flex items-center space-x-4 p-4 border border-gray-100 hover:border-blue-200 hover:bg-blue-50/30 rounded-xl transition-all group">
                             <div class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 shrink-0 group-hover:bg-blue-100 transition-colors">
                                 <i data-lucide="ticket" class="w-6 h-6"></i>
                             </div>
                             <div>
-                                <h4 class="text-sm font-bold text-gray-900">Create New Ticket</h4>
-                                <p class="text-xs text-gray-500 mt-0.5">Manual ticket entry</p>
+                                <h4 class="text-sm font-bold text-gray-900">Manage Tickets</h4>
+                                <p class="text-xs text-gray-500 mt-0.5">View and manage all tickets</p>
                             </div>
                         </a>
 
-                        <a href="/knowledge-base" class="dash-card-hover flex items-center space-x-4 p-4 border border-gray-100 hover:border-purple-200 hover:bg-purple-50/30 rounded-xl transition-all group">
+                        <a href="{{ route('KnowledgeBase') }}" class="dash-card-hover flex items-center space-x-4 p-4 border border-gray-100 hover:border-purple-200 hover:bg-purple-50/30 rounded-xl transition-all group">
                             <div class="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600 shrink-0 group-hover:bg-purple-100 transition-colors">
                                 <i data-lucide="book-open" class="w-6 h-6"></i>
                             </div>
                             <div>
-                                <h4 class="text-sm font-bold text-gray-900">Browse help articles</h4>
-                                <p class="text-xs text-gray-500 mt-0.5">Knowledge base</p>
+                                <h4 class="text-sm font-bold text-gray-900">Browse Knowledge Base</h4>
+                                <p class="text-xs text-gray-500 mt-0.5">Help articles and guides</p>
                             </div>
                         </a>
 
-                        <a href="/sla-reports" class="dash-card-hover flex items-center space-x-4 p-4 border border-gray-100 hover:border-green-200 hover:bg-green-50/30 rounded-xl transition-all group">
+                        <a href="{{ route('sla-reports.index') }}" class="dash-card-hover flex items-center space-x-4 p-4 border border-gray-100 hover:border-green-200 hover:bg-green-50/30 rounded-xl transition-all group">
                             <div class="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center text-green-600 shrink-0 group-hover:bg-green-100 transition-colors">
                                 <i data-lucide="bar-chart-3" class="w-6 h-6"></i>
                             </div>
                             <div>
-                                <h4 class="text-sm font-bold text-gray-900">View SLA reports</h4>
-                                <p class="text-xs text-gray-500 mt-0.5">performance metrics</p>
+                                <h4 class="text-sm font-bold text-gray-900">View SLA Reports</h4>
+                                <p class="text-xs text-gray-500 mt-0.5">Performance metrics and analytics</p>
                             </div>
                         </a>
 
                     </div>
                 </div>
             </div>
-        </div>
-        
-    </main>
+        </main>
+    </div>
 
     <!-- LUCIDE ICONS INITIALIZATION ENGINE -->
     <script>

@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\SlaTicket;
+use App\Models\Ticket;
 use App\Models\SlaTarget;
 use App\Models\SlaPriorityPerformance;
 use App\Models\SlaWeeklyCompliance;
@@ -17,6 +17,10 @@ class SlaCalculator
         'High' => 8,
         'Medium' => 16,
         'Low' => 24,
+        'critical' => 4,
+        'high' => 8,
+        'medium' => 16,
+        'low' => 24,
     ];
 
     private static function safeDiffInHours($start, $end): ?float
@@ -34,25 +38,29 @@ class SlaCalculator
         return round($minutes / 60, 2);
     }
 
-    public static function calculateResponseTime(SlaTicket $ticket): ?float
+    public static function calculateResponseTime(Ticket $ticket): ?float
     {
         return self::safeDiffInHours($ticket->created_at, $ticket->responded_at);
     }
 
-    public static function calculateResolutionTime(SlaTicket $ticket): ?float
+    public static function calculateResolutionTime(Ticket $ticket): ?float
     {
         return self::safeDiffInHours($ticket->created_at, $ticket->resolved_at);
     }
 
-    public static function isCompliant(SlaTicket $ticket, float $actualTime): bool
+    public static function isCompliant(Ticket $ticket, float $actualTime): bool
     {
-        $targetTime = self::TARGET_TIMES[$ticket->priority_level] ?? 24;
+        $priority = $ticket->priority_level ?? $ticket->priority ?? 'low';
+        $targetTime = self::TARGET_TIMES[$priority] ?? 24;
         return $actualTime <= $targetTime;
     }
 
     public static function calculateCompliancePercentage(string $priorityLevel): float
     {
-        $tickets = SlaTicket::where('priority_level', $priorityLevel)
+        $tickets = Ticket::where(function($q) use ($priorityLevel) {
+                $q->where('priority_level', $priorityLevel)
+                  ->orWhere('priority', strtolower($priorityLevel));
+            })
             ->whereNotNull('resolved_at')
             ->get();
 
@@ -79,7 +87,7 @@ class SlaCalculator
             $weekEnd = $weekStart->copy()->endOfWeek();
             $weekName = 'Week ' . (5 - $i);
 
-            $weekTickets = SlaTicket::whereBetween('created_at', [$weekStart, $weekEnd])->get();
+            $weekTickets = Ticket::whereBetween('created_at', [$weekStart, $weekEnd])->get();
             $resolvedWeekTickets = $weekTickets->whereNotNull('resolved_at');
             $totalResolved = $resolvedWeekTickets->count();
 
@@ -106,7 +114,7 @@ class SlaCalculator
 
     public static function updateSlaData()
     {
-        // Update priority performance
+        // Update priority performance from actual tickets
         foreach (['Critical', 'High', 'Medium', 'Low'] as $priority) {
             $compliance = self::calculateCompliancePercentage($priority);
 
@@ -114,9 +122,12 @@ class SlaCalculator
                 ->update(['compliance_percentage' => $compliance]);
         }
 
-        // Update SLA targets
+        // Update SLA targets from actual ticket data
         foreach (['Critical', 'High', 'Medium', 'Low'] as $priority) {
-            $tickets = SlaTicket::where('priority_level', $priority)
+            $tickets = Ticket::where(function($q) use ($priority) {
+                    $q->where('priority_level', $priority)
+                      ->orWhere('priority', strtolower($priority));
+                })
                 ->whereNotNull('resolved_at')
                 ->get();
 
@@ -127,23 +138,30 @@ class SlaCalculator
 
                 $compliance = self::calculateCompliancePercentage($priority);
 
+                // Determine status based on compliance
+                $status = 'On Track';
+                if ($compliance < 70) $status = 'Breached';
+                elseif ($compliance < 85) $status = 'At Risk';
+
                 SlaTarget::where('priority_level', $priority)
                     ->update([
                         'actual_time' => round($avgResolutionTime, 1) . 'h',
                         'compliance_percentage' => $compliance,
-                        'ticket_count' => $tickets->count()
+                        'ticket_count' => $tickets->count(),
+                        'status' => $status,
                     ]);
             } else {
                 SlaTarget::where('priority_level', $priority)
                     ->update([
                         'actual_time' => '0h',
                         'compliance_percentage' => 0,
-                        'ticket_count' => 0
+                        'ticket_count' => 0,
+                        'status' => 'On Track',
                     ]);
             }
         }
 
-        // Update weekly compliance
+        // Update weekly compliance from actual tickets
         $weeklyData = self::calculateWeeklyCompliance();
         foreach ($weeklyData as $week) {
             SlaWeeklyCompliance::where('week_name', $week['week_name'])
@@ -153,12 +171,12 @@ class SlaCalculator
                 ]);
         }
 
-        // Update metrics
-        $totalTickets = SlaTicket::count();
-        $resolvedTickets = SlaTicket::whereNotNull('resolved_at')->count();
+        // Update overall metrics from all tickets
+        $totalTickets = Ticket::count();
+        $resolvedTickets = Ticket::whereNotNull('resolved_at')->count();
 
         if ($resolvedTickets > 0) {
-            $overallCompliance = SlaTicket::whereNotNull('resolved_at')
+            $overallCompliance = Ticket::whereNotNull('resolved_at')
                 ->get()
                 ->filter(function ($ticket) {
                     $time = self::calculateResolutionTime($ticket);
@@ -172,7 +190,7 @@ class SlaCalculator
                 ->update(['metric_value' => $overallPercentage]);
 
             // Avg response time
-            $avgResponse = SlaTicket::whereNotNull('responded_at')
+            $avgResponse = Ticket::whereNotNull('responded_at')
                 ->get()
                 ->avg(function ($ticket) {
                     return self::calculateResponseTime($ticket);
@@ -184,7 +202,7 @@ class SlaCalculator
             }
 
             // Avg resolution time
-            $avgResolution = SlaTicket::whereNotNull('resolved_at')
+            $avgResolution = Ticket::whereNotNull('resolved_at')
                 ->get()
                 ->avg(function ($ticket) {
                     return self::calculateResolutionTime($ticket);
