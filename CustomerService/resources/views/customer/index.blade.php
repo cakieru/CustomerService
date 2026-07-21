@@ -13,7 +13,7 @@
     </style>
 </head>
 <body class="bg-gray-50 flex flex-col min-h-screen text-gray-800">
-
+<!-- Parin 8:47 -->
     <nav class="bg-white border-b border-gray-200 px-8 py-4 flex justify-between items-center sticky top-0 z-10">
         <div class="flex items-center space-x-3">
             <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">
