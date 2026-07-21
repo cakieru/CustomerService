@@ -59,7 +59,7 @@ class AdminController extends Controller
             ->get();
 
         // ✨ Matches your file: resources/views/admin/show.blade.php
-        return view('admin.show', compact('ticket', 'admins', 'notifications'));
+        return view('admin.details', compact('ticket', 'admins', 'notifications'));
     }
 
     /**
