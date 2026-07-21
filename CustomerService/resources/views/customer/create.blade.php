@@ -107,9 +107,7 @@
             </div>
             <h4 class="font-bold text-xl text-gray-900 mb-2">Need quick help?</h4>
             <p class="text-sm text-gray-500 mb-5 leading-relaxed">Search our knowledge base for instant answers to common questions.</p>
-            <a href="#" class="text-teal-600 font-bold text-sm hover:text-teal-700 inline-flex items-center group">
-                Browse Articles <span class="transform group-hover:translate-x-1 transition-transform ml-1">&rarr;</span>
-            </a>
+            
         </div>
 
     </div>

@@ -25,6 +25,7 @@ Route::get('/login', function () {
     }
     Auth::login($admin);
     return redirect()->route('admin.support.dashboard');
+    
 })->name('login');
 
 
