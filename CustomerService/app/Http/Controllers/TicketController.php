@@ -16,7 +16,7 @@ class TicketController extends Controller
             ->orderBy('updated_at', 'desc')
             ->get();
 
-        return view('customer.index', compact('tickets'));
+        return view('customer.CustomerIndex', compact('tickets'));
     }
 
     // B. Ipakita ang detalye ng ISANG specific na ticket
