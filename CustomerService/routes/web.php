@@ -78,7 +78,7 @@ Route::get('/', function () {
 
 // Agent Portal - Dashboard List View
 Route::get('/agent', function () {
-    return view('agent'); // This renders agent.blade.php (the layout with the data table)
+    return view('admin.agent'); // This renders agent.blade.php (the layout with the data table)
 })->name('agent');
 
 // Agent Portal - Single Ticket Detail View

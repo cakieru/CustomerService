@@ -47,7 +47,7 @@
     </style>
 </head>
 <body class="bg-[#fafafa] font-sans antialiased text-[#2d3748] min-h-screen flex flex-col justify-between selection:bg-blue-100">
-
+ <!-- Amparo 8:47 -->
     <!-- Navbar -->
     <header class="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50 transition-all duration-300">
         <div class="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
@@ -61,7 +61,7 @@
                     <p class="text-xs text-gray-400 font-medium">We're here to help</p>
                 </div>
             </div>
-
+            
             <!-- Navigation Links -->
             <nav class="flex items-center space-x-8">
                 <button onclick="resetPortalHome()" class="bg-[#f0f4f8] text-[#0f4c81] font-semibold px-4 py-2 rounded-xl text-sm transition-all duration-300 hover:opacity-90">Home</button>
