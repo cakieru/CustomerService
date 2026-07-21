@@ -58,25 +58,24 @@
 <body class="bg-[#fcfdfe] text-gray-700 font-sans antialiased h-full flex flex-col overflow-hidden">
 
     <!-- STATIC STICKY TOP NAVBAR HEADER -->
-    <header class="bg-white border-b border-gray-100 h-20 shrink-0 sticky top-0 z-50 flex items-center">
-        <div class="max-w-6xl w-full mx-auto px-8 flex justify-between items-center">
-            <!-- Left Branding Area -->
-            <a href="{{ route('CustomerPortal') }}" class="flex items-center gap-3 group">
-                <div class="bg-[#0f4c81] text-white p-2.5 rounded-2xl shadow-sm transition-transform duration-300 group-hover:scale-105">
+    <header class="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50 transition-all duration-300">
+        <div class="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
+            <!-- Logo -->
+            <div onclick="resetPortalHome()" class="flex items-center space-x-3 group cursor-pointer select-none">
+                <div class="bg-[#0f4c81] text-white p-2.5 rounded-xl shadow-sm group-hover:scale-105 transition-transform duration-300">
                     <i data-lucide="headphones" class="w-6 h-6"></i>
                 </div>
                 <div>
                     <h1 class="text-base font-bold text-gray-800 leading-tight">Support Center</h1>
                     <p class="text-xs text-gray-400 font-medium">We're here to help</p>
                 </div>
-            </a>
-
-            <!-- Right Nav Navigation Tabs links menu -->
-            <nav class="flex items-center gap-8">
-            <!-- CHANGE THIS -->
-            <a href="{{ route('CustomerPortal') }}" class="text-gray-500 hover:text-gray-800 font-medium text-sm transition-colors">Home</a>
-                <a href="{{ route('tickets') }}" class="bg-[#f0f4f8] text-[#0f4c81] font-semibold px-4 py-2 rounded-xl text-sm shadow-sm transition-all">My Tickets</a>
-                <a href="#" class="bg-[#0f62fe] hover:bg-[#0052cc] text-white font-semibold px-5 py-2.5 rounded-xl text-sm shadow-sm flex items-center gap-1.5 transition-all hover:-translate-y-0.5">
+            </div>
+            
+            <!-- Navigation Links -->
+            <nav class="flex items-center space-x-8">
+                <a href="{{ route('CustomerPortal') }}" class="text-gray-500 hover:text-gray-800 font-medium text-sm transition-colors duration-300">Home</a>
+                <a href="{{ route('customer.tickets') }}" class="bg-[#f0f4f8] text-[#0f4c81] font-semibold px-4 py-2 rounded-xl text-sm transition-all duration-300 hover:opacity-90">My Tickets</a> 
+                <a href="{{ route('customer.create') }}" class="bg-[#0f62fe] hover:bg-[#0052cc] text-white font-semibold px-5 py-2.5 rounded-xl text-sm shadow-sm hover:shadow-md flex items-center space-x-1.5 transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0">
                     <span>+ New Request</span>
                 </a>
             </nav>

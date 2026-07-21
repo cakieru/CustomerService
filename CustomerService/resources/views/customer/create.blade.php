@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="text-sm text-gray-500 mb-6 font-medium">
-    <a href="{{ route('CustomerPortal') }}" class="hover:text-gray-900">🏠 Home</a> > <span class="text-gray-900">New Request</span>
+    <a href="{{ route('CustomerPortal') }}" class="hover:text-gray-900"> Home</a> > <span class="text-gray-900">New Request</span>
 </div>
 
 <h2 class="text-3xl font-bold text-gray-900 mb-2">Submit a support request</h2>
