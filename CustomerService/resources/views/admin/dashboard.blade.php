@@ -4,10 +4,59 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SupportDesk Dashboard</title>
+    <!-- Google Sans Flex Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@100..1000&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Google Sans Flex', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Lucide Icons & Alpine.js -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- Premium Animations Setup from Agent Blade -->
     <style>
-        /* Hide scrollbar for cleaner look but keep functionality */
+        @keyframes portalFadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-portal-reveal {
+            animation: portalFadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            animation-delay: calc(var(--row-index, 0) * 45ms);
+        }
+
+        /* Hover lift effect matching agent.blade.php */
+        .dash-card-hover {
+            will-change: transform, opacity;
+            transition: 
+                background-color 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
+                transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
+                box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .dash-card-hover:hover {
+            background-color: #f8fafc !important;
+            transform: translateY(-4px) scale(1.01);
+            box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.08), 0 4px 12px -4px rgba(0, 0, 0, 0.04);
+            border-color: #e2e8f0;
+            z-index: 10;
+        }
+
         .hide-scrollbar::-webkit-scrollbar {
             display: none;
         }
@@ -17,128 +66,111 @@
         }
     </style>
 </head>
-<body class="bg-gray-50 font-sans text-gray-800 h-screen overflow-hidden flex">
+<body class="bg-gray-50 text-gray-800 font-sans antialiased min-h-screen flex overflow-hidden">
 
-    <aside class="w-64 bg-white border-r border-gray-200 flex flex-col justify-between flex-shrink-0 h-full">
+    <!-- SIDEBAR (100% Identical to agent.blade.php) -->
+    <aside class="w-64 bg-white border-r border-gray-200 flex flex-col justify-between fixed h-full z-30">
         <div>
-            <div class="px-6 pt-8 pb-6">
-                <h1 class="text-xl font-bold text-gray-900">SupportDesk</h1>
-                <p class="text-sm text-gray-500 mt-1">E-commerce Support</p>
+            <div class="p-6 border-b border-gray-100">
+                <h1 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                    SupportDesk
+                </h1>
+                <p class="text-xs text-gray-400 mt-1">E-commerce Support</p>
             </div>
-
-            <nav class="px-4 space-y-1">
-                <a href="{{ route('admin.support.dashboard') }}" class="flex items-center space-x-3 px-3 py-2.5 bg-blue-50 text-blue-700 rounded-lg font-medium transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
-                    </svg>
-                    <span>Dashboard</span>
+            <nav class="p-4 space-y-1">
+                <a href="{{ route('admin.support.dashboard') }}" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-blue-700 bg-blue-50 rounded-lg transition-all duration-300">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5 text-blue-600"></i> Dashboard
                 </a>
-                
-                <a href="{{ route('agent') }}" class="flex items-center space-x-3 px-3 py-2.5 text-gray-600 hover:bg-gray-50 rounded-lg font-medium transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path>
-                    </svg>
-                    <span>Tickets</span>
+                <a href="{{ route('agent') }}" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 transition-all duration-300">
+                    <i data-lucide="ticket" class="w-5 h-5"></i> Tickets
                 </a>
-
-                <a href="{{ route('KnowledgeBase') }}" class="flex items-center space-x-3 px-3 py-2.5 text-gray-600 hover:bg-gray-50 rounded-lg font-medium transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 662 6l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"></path>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"></path>
-                    </svg>
-                    <span>Knowledge Base</span>
+                <a href="{{ route('KnowledgeBase') }}" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 transition-all duration-300">
+                    <i data-lucide="book-open" class="w-5 h-5"></i> Knowledge Base
                 </a>
-
-                <a href="{{ route('admin.support.reports') }}" class="flex items-center space-x-3 px-3 py-2.5 text-gray-600 hover:bg-gray-50 rounded-lg font-medium transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                    </svg>
-                    <span>SLA Reports</span>
+                <a href="{{ route('admin.support.reports') }}" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 transition-all duration-300">
+                    <i data-lucide="bar-chart-3" class="w-5 h-5"></i> SLA Reports
                 </a>
             </nav>
         </div>
 
-        <div class="p-4 border-t border-gray-200">
-            <a href="{{ route('CustomerPortal') }}" class="flex items-center space-x-3 px-3 py-2.5 text-blue-600 hover:bg-gray-50 rounded-lg font-medium transition-colors">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                </svg>
-                <span>Customer Portal</span>
+        <div class="p-4 border-t border-gray-100">
+            <a href="{{ route('CustomerPortal') }}" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-purple-700 hover:bg-purple-50 rounded-lg transition-all duration-300">
+                <i data-lucide="user" class="w-5 h-5"></i>
+                Customer Portal
             </a>
         </div>
     </aside>
 
-    <main class="flex-1 flex flex-col h-full bg-white relative">
+    <!-- RIGHT CONTENT AREA -->
+    <div class="flex-1 pl-64 flex flex-col h-screen overflow-hidden relative">
         
-        <!-- Header Section -->
-        <header class="h-16 border-b border-gray-200 bg-white flex items-center justify-between px-8 flex-shrink-0">
-            <!-- Left Side: Search Bar -->
+        <!-- STICKY HEADER NAVBAR (100% Identical to agent.blade.php) -->
+        <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8 sticky top-0 z-20 flex-shrink-0">
             <div class="relative w-96">
-                <svg class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                </svg>
+                <i data-lucide="search" class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
                 <form action="{{ route('admin.support.tickets.index') }}" method="GET">
-                    <input type="text" name="search" placeholder="Search tickets by reference or subject..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="text" name="search" placeholder="Search tickets, customers, articles..." class="w-full pl-10 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all">
                 </form>
             </div>
-
-            <!-- Right Side Group: Notification Bell + Admin Profile -->
-            <div class="flex items-center space-x-6">
+            <div class="flex items-center gap-4">
+                
                 @php
-                    // Dynamically pull the 5 newest tickets straight from the DB in real-time!
                     $notifications = \App\Models\Ticket::latest()->take(5)->get();
                 @endphp
-                            
+
+                <!-- Anchored Relative Parent Dropdown Holder -->
                 <div x-data="{ notificationsOpen: false }" class="relative">
-                    <button @click="notificationsOpen = !notificationsOpen" class="relative text-gray-500 hover:text-gray-700 focus:outline-none cursor-pointer">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-                        </svg>
+                    <button @click="notificationsOpen = !notificationsOpen" class="relative p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-all focus:outline-none cursor-pointer">
+                        <i data-lucide="bell" class="w-5 h-5"></i>
                         @if(count($notifications) > 0)
-                            <span class="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>
+                            <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
                         @endif
                     </button>
 
-                    <div x-show="notificationsOpen" @click.outside="notificationsOpen = false" x-transition class="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden z-50" style="display: none;">
-                        <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50">
-                            <h3 class="font-semibold text-gray-800 text-sm">Real-time Unread Tickets</h3>
-                            <span class="text-xs bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded-full">{{ count($notifications) }}</span>
+                    <!-- FLOATING NOTIFICATIONS POPUP (Anchored right beneath the bell) -->
+                    <div x-show="notificationsOpen" @click.outside="notificationsOpen = false" x-transition class="absolute right-0 mt-2 w-[360px] bg-white border border-gray-200 rounded-xl shadow-2xl z-50 flex flex-col overflow-hidden" style="display: none;">
+                        <div class="p-4 border-b border-gray-100 flex items-center justify-between">
+                            <h3 class="text-sm font-bold text-gray-900">Notifications</h3>
+                            <button class="text-xs font-semibold text-blue-600 hover:underline">Mark all as read</button>
                         </div>
-                        <div class="max-h-96 overflow-y-auto divide-y divide-gray-50">
+                        <div class="max-h-[380px] overflow-y-auto divide-y divide-gray-100">
                             @forelse($notifications as $notify)
-                                <a href="{{ route('admin.support.tickets.show', $notify->id) }}" class="flex px-4 py-3 hover:bg-gray-50 transition">
-                                    <div class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs mr-3">
-                                        {{ substr($notify->customer->name ?? $notify->customer_name ?? 'C', 0, 1) }}
+                                <a href="{{ route('admin.support.tickets.show', $notify->id) }}" class="p-4 hover:bg-gray-50 transition-all flex items-start gap-3 relative block">
+                                    <div class="w-8 h-8 rounded-full bg-orange-100 text-orange-700 flex-shrink-0 flex items-center justify-center font-bold text-xs">
+                                        {{ strtoupper(substr($notify->customer->name ?? $notify->customer_name ?? 'C', 0, 2)) }}
                                     </div>
-                                    <div class="flex-1">
-                                        <p class="text-xs font-semibold text-gray-900">{{ $notify->subject ?? 'New Support Ticket' }}</p>
-                                        <p class="text-[11px] text-gray-500 truncate max-w-[180px]">
-                                            Ref: <span class="text-blue-600 font-medium">{{ $notify->ticket_reference ?? $notify->reference_code ?? 'TKT-'.$notify->id }}</span> by {{ $notify->customer->name ?? $notify->customer_name ?? 'Guest' }}
-                                        </p>
-                                        <p class="text-[10px] text-gray-400 mt-0.5">{{ $notify->created_at->diffForHumans() }}</p>
+                                    <div class="flex-1 pr-3">
+                                        <p class="text-xs font-bold text-gray-900 truncate">{{ $notify->subject ?? 'New Support Ticket' }}</p>
+                                        <p class="text-[11px] text-gray-500 mt-0.5"><span class="text-blue-600 font-semibold">#{{ $notify->ticket_reference ?? 'TKT-'.$notify->id }}</span> by {{ $notify->customer->name ?? $notify->customer_name ?? 'Guest' }}</p>
+                                        <span class="text-[10px] text-gray-400 block mt-1">{{ $notify->created_at->diffForHumans() }}</span>
                                     </div>
-                                    <div class="w-2 h-2 rounded-full bg-blue-600 mt-1"></div>
+                                    <span class="w-2 h-2 bg-blue-600 rounded-full absolute right-4 top-1/2 -translate-y-1/2"></span>
                                 </a>
                             @empty
                                 <div class="p-6 text-center text-xs text-gray-400">All caught up! No unread notifications.</div>
                             @endforelse
                         </div>
+                        <div class="p-3 bg-gray-50 border-t border-gray-100 text-center">
+                            <a href="{{ route('admin.support.tickets.index') }}" class="w-full inline-flex items-center justify-center gap-2 py-2 border border-gray-200 rounded-lg text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 transition-all">
+                                <i data-lucide="list" class="w-3.5 h-3.5"></i> View all notifications
+                            </a>
+                        </div>
                     </div>
                 </div>
 
-                <button class="flex items-center space-x-3 text-left focus:outline-none">
-                    <div class="h-9 w-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-semibold text-sm">AD</div>
+                <div class="flex items-center gap-3 pl-2 border-l border-gray-200">
+                    <div class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-semibold text-xs">AD</div>
                     <div>
-                        <p class="text-sm font-semibold text-gray-900 leading-tight">Admin User</p>
-                        <p class="text-xs text-gray-500">Support Manager</p>
+                        <p class="text-xs font-semibold text-gray-900 leading-tight">Admin User</p>
+                        <p class="text-[10px] text-gray-400">Support Manager</p>
                     </div>
-                </button>
+                </div>
             </div>
         </header>
 
-        <div class="flex-1 overflow-y-auto hide-scrollbar p-8 bg-gray-50/50">
-            <div class="max-w-7xl mx-auto space-y-8">
+        <!-- MAIN CONTAINER -->
+        <main class="p-8 flex-1 overflow-y-auto h-[calc(100vh-4rem)] hide-scrollbar">
+            <div class="space-y-6">
                 
                 @if(session('success'))
                     <div class="p-4 bg-green-50 border border-green-200 text-green-700 rounded-xl text-xs font-medium shadow-sm">
@@ -147,53 +179,45 @@
                 @endif
                 
                 <div>
-                    <h2 class="text-2xl font-bold text-gray-900 tracking-tight">DASHBOARD</h2>
+                    <h2 class="text-3xl font-bold text-gray-950 tracking-tight">DASHBOARD</h2>
                     <p class="text-sm text-gray-500 mt-1">Overview of support operations and dynamic real-time live feed indicators</p>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-                    <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex items-center justify-between">
+                    <div class="dash-card-hover bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium text-gray-500">Open Tickets</p>
                             <h3 class="text-4xl font-bold text-gray-900 mt-1">{{ $summary['openTickets'] }}</h3>
                         </div>
                         <div class="h-12 w-12 bg-indigo-50 rounded-lg flex items-center justify-center text-indigo-500">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path>
-                            </svg>
+                            <i data-lucide="ticket" class="w-6 h-6 text-indigo-600"></i>
                         </div>
                     </div>
-                    <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex items-center justify-between">
+                    <div class="dash-card-hover bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium text-gray-500">In Progress</p>
                             <h3 class="text-4xl font-bold text-gray-900 mt-1">{{ $summary['inProgress'] }}</h3>
                         </div>
                         <div class="h-12 w-12 bg-yellow-50 rounded-lg flex items-center justify-center text-yellow-500">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
+                            <i data-lucide="clock" class="w-6 h-6 text-yellow-600"></i>
                         </div>
                     </div>
-                    <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex items-center justify-between">
+                    <div class="dash-card-hover bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium text-gray-500">Resolved Today</p>
                             <h3 class="text-4xl font-bold text-gray-900 mt-1">{{ $summary['resolvedToday'] }}</h3>
                         </div>
                         <div class="h-12 w-12 bg-green-50 rounded-lg flex items-center justify-center text-green-500">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
+                            <i data-lucide="check-circle-2" class="w-6 h-6 text-green-600"></i>
                         </div>
                     </div>
-                    <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex items-center justify-between">
+                    <div class="dash-card-hover bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium text-gray-500">Critical Priority</p>
                             <h3 class="text-4xl font-bold text-gray-900 mt-1">{{ $summary['criticalPriority'] }}</h3>
                         </div>
                         <div class="h-12 w-12 bg-red-50 rounded-lg flex items-center justify-center text-red-500">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                            </svg>
+                            <i data-lucide="alert-triangle" class="w-6 h-6 text-red-600"></i>
                         </div>
                     </div>
                 </div>
@@ -207,7 +231,7 @@
                         </div>
                         <div class="divide-y divide-gray-100 flex-1">
                             @forelse($recentTickets as $ticket)
-                                <a href="{{ route('admin.support.tickets.show', $ticket->id) }}" class="block px-6 py-4 hover:bg-gray-50 transition-colors">
+                                <a href="{{ route('admin.support.tickets.show', $ticket->id) }}" class="dash-card-hover block px-6 py-4 hover:bg-gray-50 transition-colors">
                                     <div class="flex justify-between items-start">
                                         <div class="space-y-1">
                                             <div class="flex items-center space-x-2">
@@ -239,11 +263,9 @@
                         </div>
                         <div class="divide-y divide-gray-100 flex-1">
                             @forelse($slaAlerts as $alert)
-                                <a href="{{ route('admin.support.tickets.show', $alert->id) }}" class="flex px-6 py-4 space-x-4 hover:bg-gray-50 transition-colors">
+                                <a href="{{ route('admin.support.tickets.show', $alert->id) }}" class="dash-card-hover flex px-6 py-4 space-x-4 hover:bg-gray-50 transition-colors">
                                     <div class="flex-shrink-0 mt-0.5 text-red-500">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                        </svg>
+                                        <i data-lucide="alert-circle" class="w-5 h-5 text-red-600"></i>
                                     </div>
                                     <div class="flex-1">
                                         <p class="text-sm font-bold text-gray-900 truncate max-w-xs">{{ $alert->subject }}</p>
@@ -253,9 +275,7 @@
                                 </a>
                             @empty
                                 <div class="p-8 text-center text-sm text-gray-400 flex flex-col items-center justify-center h-full">
-                                    <svg class="w-8 h-8 text-green-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                    </svg>
+                                    <i data-lucide="check-circle" class="w-8 h-8 text-green-500 mb-2"></i>
                                     <p class="font-medium text-gray-600">Great job! No pending SLA breaches.</p>
                                 </div>
                             @endforelse
@@ -267,11 +287,9 @@
                 <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm mt-6">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         
-                        <a href="/tickets" class="flex items-center space-x-4 p-4 border border-gray-100 hover:border-blue-200 hover:bg-blue-50/30 rounded-xl transition-all group">
+                        <a href="/tickets" class="dash-card-hover flex items-center space-x-4 p-4 border border-gray-100 hover:border-blue-200 hover:bg-blue-50/30 rounded-xl transition-all group">
                             <div class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 shrink-0 group-hover:bg-blue-100 transition-colors">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path>
-                                </svg>
+                                <i data-lucide="ticket" class="w-6 h-6"></i>
                             </div>
                             <div>
                                 <h4 class="text-sm font-bold text-gray-900">Create New Ticket</h4>
@@ -279,11 +297,9 @@
                             </div>
                         </a>
 
-                        <a href="/knowledge-base" class="flex items-center space-x-4 p-4 border border-gray-100 hover:border-purple-200 hover:bg-purple-50/30 rounded-xl transition-all group">
+                        <a href="/knowledge-base" class="dash-card-hover flex items-center space-x-4 p-4 border border-gray-100 hover:border-purple-200 hover:bg-purple-50/30 rounded-xl transition-all group">
                             <div class="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600 shrink-0 group-hover:bg-purple-100 transition-colors">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477-4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-                                </svg>
+                                <i data-lucide="book-open" class="w-6 h-6"></i>
                             </div>
                             <div>
                                 <h4 class="text-sm font-bold text-gray-900">Browse help articles</h4>
@@ -291,11 +307,9 @@
                             </div>
                         </a>
 
-                        <a href="/sla-reports" class="flex items-center space-x-4 p-4 border border-gray-100 hover:border-green-200 hover:bg-green-50/30 rounded-xl transition-all group">
+                        <a href="/sla-reports" class="dash-card-hover flex items-center space-x-4 p-4 border border-gray-100 hover:border-green-200 hover:bg-green-50/30 rounded-xl transition-all group">
                             <div class="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center text-green-600 shrink-0 group-hover:bg-green-100 transition-colors">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-                                </svg>
+                                <i data-lucide="bar-chart-3" class="w-6 h-6"></i>
                             </div>
                             <div>
                                 <h4 class="text-sm font-bold text-gray-900">View SLA reports</h4>
@@ -310,5 +324,11 @@
         
     </main>
 
+    <!-- LUCIDE ICONS INITIALIZATION ENGINE -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+        });
+    </script>
 </body>
 </html>
