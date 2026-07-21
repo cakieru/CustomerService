@@ -384,7 +384,7 @@
         <div class="max-w-6xl mx-auto px-6 h-16 flex flex-col sm:flex-row items-center justify-between text-xs text-gray-400 font-medium">
             <p>&copy; {{ date('Y') }} Support Center. All rights reserved.</p>
             <div class="flex space-x-6 mt-2 sm:mt-0">
-                <a href="{{ route('admin.support.dashboard') }}" class="hover:text-gray-600 transition-colors duration-300">Agent Portal</a>
+                <a href="{{ route('KnowledgeBase') }}" class="hover:text-gray-600 transition-colors duration-300">Agent Portal</a>
                 <button onclick="switchView('FAQ')" class="hover:text-gray-600 transition-colors duration-300 focus:outline-none">FAQ</button>
                 <button onclick="switchView('TERMS')" class="hover:text-gray-600 transition-colors duration-300 focus:outline-none">Terms</button>    
             </div>
