@@ -78,9 +78,7 @@ Route::get('/', function () {
 })->name('home');
 
 // Agent Portal - Dashboard List View
-Route::get('/agent', function () {
-    return view('admin.agent'); // This renders agent.blade.php (the layout with the data table)
-})->name('agent');
+Route::get('/agent', [AdminController::class, 'agentTickets'])->name('agent');
 
 // Agent Portal - Single Ticket Detail View
 Route::get('/agent/ticket-details', function () {

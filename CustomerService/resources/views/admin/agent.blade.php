@@ -205,7 +205,7 @@
                             <i data-lucide="download" class="w-4 h-4"></i> Export
                         </button>
                     </div>
-                    <div id="ticketCount" class="text-xs text-gray-400 font-medium">Showing 8 of 8 tickets</div>
+                    <div id="ticketCount" class="text-xs text-gray-400 font-medium">Showing {{ $tickets->count() }} of {{ $tickets->count() }} tickets</div>
                 </div>
 
                 <!-- NEW MODERN FLEXIBLE DATA TABLE LAYOUT -->
@@ -224,221 +224,68 @@
                     <!-- Table Body Container -->
                     <div id="ticketTableBody" class="divide-y divide-gray-100 text-sm flex flex-col relative bg-white">
                         
-                        <!-- TKT-1001 -->
-                        <div class="ticket-row table-grid py-4 px-6 bg-white border-b border-gray-100 cursor-pointer" data-status="open" data-priority="high" data-url="{{ route('agent.ticket.details') }}" onclick="window.location=this.dataset.url">
-                            <div class="font-semibold text-blue-600">TKT-1001</div>
+                    @forelse($tickets as $index => $ticket)
+                        <div class="ticket-row table-grid py-4 px-6 bg-white border-b border-gray-100 cursor-pointer animate-portal-reveal" 
+                             data-status="{{ $ticket->status }}" 
+                             data-priority="{{ $ticket->priority }}" 
+                             data-url="{{ route('admin.support.tickets.show', $ticket) }}" 
+                             onclick="window.location=this.dataset.url"
+                             style="--row-index: {{ $index }};">
+                            <div class="font-semibold text-blue-600">{{ $ticket->ticket_reference }}</div>
                             <div>
-                                <p class="font-medium text-gray-900">Order #54321 not received after 10 days</p>
+                                <p class="font-medium text-gray-900">{{ $ticket->subject }}</p>
+                                @if($ticket->status === 'open' && in_array($ticket->priority, ['high', 'critical']))
                                 <p class="text-[11px] font-bold text-red-600 mt-0.5">Overdue</p>
+                                @endif
                             </div>
                             <div>
                                 <div class="flex items-center gap-2">
-                                    <div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-xs font-bold text-gray-600">CC</div>
+                                    <div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-xs font-bold text-gray-600">
+                                        {{ strtoupper(substr($ticket->customer->name ?? 'U', 0, 2)) }}
+                                    </div>
                                     <div>
-                                        <p class="font-semibold text-gray-900 leading-tight">Charlize Casama</p>
-                                        <p class="text-xs text-gray-400">charlizecasama@email.com</p>
+                                        <p class="font-semibold text-gray-900 leading-tight">{{ $ticket->customer->name ?? 'Unknown' }}</p>
+                                        <p class="text-xs text-gray-400">{{ $ticket->customer->email ?? '' }}</p>
                                     </div>
                                 </div>
                             </div>
-                            <div><span class="px-2.5 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-700">open</span></div>
-                            <div><span class="px-2.5 py-0.5 text-xs font-medium rounded-full bg-orange-100 text-orange-700">high</span></div>
                             <div>
-                                <div class="flex items-center gap-2">
-                                    <div class="w-6 h-6 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-[10px] font-bold">LL</div>
-                                    <span class="text-gray-700 font-medium text-xs">Louise Lane</span>
-                                </div>
-                            </div>
-                            <div class="text-gray-500 font-medium">6/26/2026</div>
-                        </div>
-
-                        <!-- TKT-1002 -->
-                        <div class="ticket-row table-grid py-4 px-6 bg-white border-b border-gray-100 cursor-pointer" data-status="in-progress" data-priority="medium" data-url="{{ route('agent.ticket.details') }}" onclick="window.location=this.dataset.url">
-                            <div class="font-semibold text-blue-600">TKT-1002</div>
-                            <div>
-                                <p class="font-medium text-gray-900">Received wrong item - ordered blue, got red</p>
-                                <p class="text-[11px] font-bold text-red-600 mt-0.5">Overdue</p>
+                                <span class="px-2.5 py-0.5 text-xs font-medium rounded-full 
+                                    {{ $ticket->status === 'open' ? 'bg-blue-100 text-blue-700' : 
+                                       ($ticket->status === 'in-progress' ? 'bg-yellow-100 text-yellow-700' : 
+                                       ($ticket->status === 'resolved' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600')) }}">
+                                    {{ $ticket->status }}
+                                </span>
                             </div>
                             <div>
+                                <span class="px-2.5 py-0.5 text-xs font-medium rounded-full 
+                                    {{ $ticket->priority === 'critical' ? 'bg-red-100 text-red-700' : 
+                                       ($ticket->priority === 'high' ? 'bg-orange-100 text-orange-700' : 
+                                       ($ticket->priority === 'medium' ? 'bg-yellow-100 text-yellow-600' : 'bg-gray-100 text-gray-600')) }}">
+                                    {{ $ticket->priority }}
+                                </span>
+                            </div>
+                            <div>
+                                @if($ticket->agent)
                                 <div class="flex items-center gap-2">
-                                    <div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-xs font-bold text-gray-600">GD</div>
-                                    <div>
-                                        <p class="font-semibold text-gray-900 leading-tight">Gwen Dogelio</p>
-                                        <p class="text-xs text-gray-400">gwendogelio@gmail.com</p>
+                                    <div class="w-6 h-6 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-[10px] font-bold">
+                                        {{ strtoupper(substr($ticket->agent->name, 0, 2)) }}
                                     </div>
+                                    <span class="text-gray-700 font-medium text-xs">{{ $ticket->agent->name }}</span>
                                 </div>
+                                @else
+                                <span class="text-gray-400 text-xs italic">Unassigned</span>
+                                @endif
                             </div>
-                            <div><span class="px-2.5 py-0.5 text-xs font-medium rounded-full bg-yellow-100 text-yellow-700">in-progress</span></div>
-                            <div><span class="px-2.5 py-0.5 text-xs font-medium rounded-full bg-yellow-100 text-yellow-600">medium</span></div>
-                            <div>
-                                <div class="flex items-center gap-2">
-                                    <div class="w-6 h-6 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-[10px] font-bold">PG</div>
-                                    <span class="text-gray-700 font-medium text-xs">Prinz Geon</span>
-                                </div>
-                            </div>
-                            <div class="text-gray-500 font-medium">6/27/2026</div>
+                            <div class="text-gray-500 font-medium">{{ $ticket->created_at->format('n/j/Y') }}</div>
                         </div>
-
-                        <!-- TKT-1003 -->
-                        <div class="ticket-row table-grid py-4 px-6 bg-white border-b border-gray-100 cursor-pointer" data-status="open" data-priority="medium" data-url="{{ route('agent.ticket.details') }}" onclick="window.location=this.dataset.url">
-                            <div class="font-semibold text-blue-600">TKT-1003</div>
-                            <div>
-                                <p class="font-medium text-gray-900">Cannot apply discount code at checkout</p>
-                            </div>
-                            <div>
-                                <div class="flex items-center gap-2">
-                                    <div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-xs font-bold text-gray-600">YW</div>
-                                    <div>
-                                        <p class="font-semibold text-gray-900 leading-tight">Yuki Watanabe</p>
-                                        <p class="text-xs text-gray-400">yukiwatanabe@email.com</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div><span class="px-2.5 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-700">open</span></div>
-                            <div><span class="px-2.5 py-0.5 text-xs font-medium rounded-full bg-yellow-100 text-yellow-600">medium</span></div>
-                            <div><span class="text-gray-400 text-xs italic">Unassigned</span></div>
-                            <div class="text-gray-500 font-medium">6/28/2026</div>
+                        @empty
+                        <div class="py-12 text-center text-gray-400">
+                            <p>No tickets found.</p>
                         </div>
+                        @endforelse
 
-                        <!-- TKT-1004 -->
-                        <div class="ticket-row table-grid py-4 px-6 bg-white border-b border-gray-100 cursor-pointer" data-status="in-progress" data-priority="high" data-url="{{ route('agent.ticket.details') }}" onclick="window.location=this.dataset.url">
-                            <div class="font-semibold text-blue-600">TKT-1004</div>
-                            <div>
-                                <p class="font-medium text-gray-900">Refund not received after return</p>
-                                <p class="text-[11px] font-bold text-red-600 mt-0.5">Overdue</p>
-                            </div>
-                            <div>
-                                <div class="flex items-center gap-2">
-                                    <div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-xs font-bold text-gray-600">JD</div>
-                                    <div>
-                                        <p class="font-semibold text-gray-900 leading-tight">Jade Toong</p>
-                                        <p class="text-xs text-gray-400">jadetoonga@email.com</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div><span class="px-2.5 py-0.5 text-xs font-medium rounded-full bg-yellow-100 text-yellow-700">in-progress</span></div>
-                            <div><span class="px-2.5 py-0.5 text-xs font-medium rounded-full bg-orange-100 text-orange-700">high</span></div>
-                            <div>
-                                <div class="flex items-center gap-2">
-                                    <div class="w-6 h-6 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-[10px] font-bold">EA</div>
-                                    <span class="text-gray-700 font-medium text-xs">Emman Aragon</span>
-                                </div>
-                            </div>
-                            <div class="text-gray-500 font-medium">6/25/2026</div>
-                        </div>
-
-                        <!-- TKT-1005 -->
-                        <div class="ticket-row table-grid py-4 px-6 bg-white border-b border-gray-100 cursor-pointer" data-status="open" data-priority="critical" data-url="{{ route('agent.ticket.details') }}" onclick="window.location=this.dataset.url">
-                            <div class="font-semibold text-blue-600">TKT-1005</div>
-                            <div>
-                                <p class="font-medium text-gray-900">Product arrived damaged - broken screen</p>
-                                <p class="text-[11px] font-bold text-red-600 mt-0.5">Overdue</p>
-                            </div>
-                            <div>
-                                <div class="flex items-center gap-2">
-                                    <div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-xs font-bold text-gray-600">AM</div>
-                                    <div>
-                                        <p class="font-semibold text-gray-900 leading-tight">Alfie Mark</p>
-                                        <p class="text-xs text-gray-400">alfielovemark@gmail.com</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div><span class="px-2.5 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-700">open</span></div>
-                            <div><span class="px-2.5 py-0.5 text-xs font-medium rounded-full bg-red-100 text-red-700">critical</span></div>
-                            <div>
-                                <div class="flex items-center gap-2">
-                                    <div class="w-6 h-6 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-[10px] font-bold">LL</div>
-                                    <span class="text-gray-700 font-medium text-xs">Louise Lane</span>
-                                </div>
-                            </div>
-                            <div class="text-gray-500 font-medium">6/28/2026</div>
-                        </div>
-
-                        <!-- TKT-1006 -->
-                        <div class="ticket-row table-grid py-4 px-6 bg-white border-b border-gray-100 cursor-pointer" data-status="resolved" data-priority="medium" data-url="{{ route('agent.ticket.details') }}" onclick="window.location=this.dataset.url">
-                            <div class="font-semibold text-blue-600">TKT-1006</div>
-                            <div>
-                                <p class="font-medium text-gray-900">Account login issues after password reset</p>
-                            </div>
-                            <div>
-                                <div class="flex items-center gap-2">
-                                    <div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-xs font-bold text-gray-600">LH</div>
-                                    <div>
-                                        <p class="font-semibold text-gray-900 leading-tight">Lucas Hainz</p>
-                                        <p class="text-xs text-gray-400">lucashainz@email.com</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div><span class="px-2.5 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700">resolved</span></div>
-                            <div><span class="px-2.5 py-0.5 text-xs font-medium rounded-full bg-yellow-100 text-yellow-600">medium</span></div>
-                            <div>
-                                <div class="flex items-center gap-2">
-                                    <div class="w-6 h-6 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-[10px] font-bold">JB</div>
-                                    <span class="text-gray-700 font-medium text-xs">Jerard Baluyot</span>
-                                </div>
-                            </div>
-                            <div class="text-gray-500 font-medium">6/24/2026</div>
-                        </div>
-
-                        <!-- TKT-1007 -->
-                        <div class="ticket-row table-grid py-4 px-6 bg-white border-b border-gray-100 cursor-pointer" data-status="open" data-priority="low" data-url="{{ route('agent.ticket.details') }}" onclick="window.location=this.dataset.url">
-                            <div class="font-semibold text-blue-600">TKT-1007</div>
-                            <div>
-                                <p class="font-medium text-gray-900">Size chart incorrect - item doesn't fit</p>
-                            </div>
-                            <div>
-                                <div class="flex items-center gap-2">
-                                    <div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-xs font-bold text-gray-600">CL</div>
-                                    <div>
-                                        <p class="font-semibold text-gray-900 leading-tight">Clark Louie</p>
-                                        <p class="text-xs text-gray-400">clarklouie@gmail.com</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div><span class="px-2.5 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-700">open</span></div>
-                            <div><span class="px-2.5 py-0.5 text-xs font-medium rounded-full bg-gray-100 text-gray-600">low</span></div>
-                            <div><span class="text-gray-400 text-xs italic">Unassigned</span></div>
-                            <div class="text-gray-500 font-medium">6/28/2026</div>
-                        </div>
-
-                        <!-- TKT-1008 -->
-                        <div class="ticket-row table-grid py-4 px-6 bg-white border-b border-gray-100 cursor-pointer" data-status="closed" data-priority="high" data-url="{{ route('agent.ticket.details') }}" onclick="window.location=this.dataset.url">
-                            <div class="font-semibold text-blue-600">TKT-1008</div>
-                            <div>
-                                <p class="font-medium text-gray-900">Subscription cancellation not processed</p>
-                                <p class="text-[11px] font-bold text-red-600 mt-0.5">Overdue</p>
-                            </div>
-                            <div>
-                                <div class="flex items-center gap-2">
-                                    <div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-xs font-bold text-gray-600">ND</div>
-                                    <div>
-                                        <p class="font-semibold text-gray-900 leading-tight">Natsu Dragneel</p>
-                                        <p class="text-xs text-gray-400">natsudragneel@email.com</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div><span class="px-2.5 py-0.5 text-xs font-medium rounded-full bg-gray-100 text-gray-600">closed</span></div>
-                            <div><span class="px-2.5 py-0.5 text-xs font-medium rounded-full bg-orange-100 text-orange-700">high</span></div>
-                            <div>
-                                <div class="flex items-center gap-2">
-                                    <div class="w-6 h-6 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-[10px] font-bold">PG</div>
-                                    <span class="text-gray-700 font-medium text-xs">Prinz Geon</span>
-                                </div>
-                            </div>
-                            <div class="text-gray-500 font-medium">6/23/2026</div>
-                        </div>
-
-                    </div>
-                </div>
-
-                <!-- PAGINATION CONTROLS -->
-                <div class="flex justify-center items-center gap-2 pt-2">
-                    <button class="w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 shadow-sm active:scale-95 transition-all">
-                        <i data-lucide="chevron-left" class="w-4 h-4"></i>
-                    </button>
-                    <button class="w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 shadow-sm active:scale-95 transition-all">
-                        <i data-lucide="chevron-right" class="w-4 h-4"></i>
-                    </button>
-                </div>
+               
             </div>
         </main>
     </div>
