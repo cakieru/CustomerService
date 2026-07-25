@@ -90,7 +90,7 @@ Route::post('/knowledge-base/{id}/view', [KnowledgeBaseController::class, 'incre
 |--------------------------------------------------------------------------
 */
 Route::get('/agent', function () {
-    return view('agent');
+    return view('admin.agent');
 })->name('agent');
 
 // Agent Portal - Dashboard List View
@@ -108,3 +108,10 @@ Route::get('/agent/ticket/details', function () {
 Route::get('/terms', function () {
     return view('terms');
 })->name('terms');
+
+Route::post('/admin/tickets/{ticket}/reply', [AdminController::class, 'reply'])->name('admin.support.tickets.reply');
+Route::post('/admin/tickets/{ticket}/assign', [AdminController::class, 'assign'])->name('admin.support.tickets.assign');
+Route::patch('/admin/tickets/{ticket}/resolve', [AdminController::class, 'resolve'])->name('admin.support.tickets.resolve');
+Route::patch('/admin/tickets/{ticket}/close', [AdminController::class, 'close'])->name('admin.support.tickets.close');
+Route::delete('/admin/tickets/{ticket}', [AdminController::class, 'destroy'])->name('admin.support.tickets.destroy');
+Route::get('/admin/customers/{customer}', [AdminController::class, 'showCustomer'])->name('admin.customers.show');
