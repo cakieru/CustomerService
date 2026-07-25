@@ -114,7 +114,7 @@
                 <a href="<?php echo e(route('KnowledgeBase')); ?>" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-blue-700 bg-blue-50 rounded-lg transition-all duration-300">
                     <i data-lucide="book-open" class="w-5 h-5 text-blue-600"></i> Knowledge Base
                 </a>
-                <a href="#" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 transition-all duration-300">
+                <a href="<?php echo e(route('admin.support.reports')); ?>" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 transition-all duration-300">
                     <i data-lucide="bar-chart-3" class="w-5 h-5"></i> SLA Reports
                 </a>
             </nav>

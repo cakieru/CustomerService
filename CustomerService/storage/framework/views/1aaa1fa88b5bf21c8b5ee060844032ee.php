@@ -1,1 +1,0 @@
-<?php /**PATH C:\Users\Administrator\Documents\GitHub\CustomerService\CustomerService\resources\views/admin/reports.blade.php ENDPATH**/ ?>

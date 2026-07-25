@@ -115,3 +115,26 @@ Route::patch('/admin/tickets/{ticket}/resolve', [AdminController::class, 'resolv
 Route::patch('/admin/tickets/{ticket}/close', [AdminController::class, 'close'])->name('admin.support.tickets.close');
 Route::delete('/admin/tickets/{ticket}', [AdminController::class, 'destroy'])->name('admin.support.tickets.destroy');
 Route::get('/admin/customers/{customer}', [AdminController::class, 'showCustomer'])->name('admin.customers.show');
+
+/*
+|--------------------------------------------------------------------------
+| Admin Routes
+|--------------------------------------------------------------------------
+*/
+Route::prefix('admin')->group(function () {
+    Route::get('/dashboard', [AdminController::class, 'index'])->name('admin.support.dashboard');
+    Route::get('/tickets', [AdminController::class, 'tickets'])->name('admin.support.tickets.index');
+    Route::get('/tickets/{ticket}', [AdminController::class, 'show'])->name('admin.support.tickets.show');
+    Route::post('/tickets/{ticket}/status', [AdminController::class, 'updateStatus'])->name('admin.tickets.status');
+    Route::post('/tickets/{ticket}/assign', [AdminController::class, 'assign'])->name('admin.support.tickets.assign');
+    Route::post('/tickets/{ticket}/reply', [AdminController::class, 'reply'])->name('admin.support.tickets.reply');
+    Route::patch('/tickets/{ticket}/resolve', [AdminController::class, 'resolve'])->name('admin.support.tickets.resolve');
+    Route::patch('/tickets/{ticket}/close', [AdminController::class, 'close'])->name('admin.support.tickets.close');
+    Route::delete('/tickets/{ticket}', [AdminController::class, 'destroy'])->name('admin.support.tickets.destroy');
+    Route::get('/customers/{customer}', [AdminController::class, 'showCustomer'])->name('admin.customers.show');
+    
+    // Admin reports now redirects to full SLA reports page
+    Route::get('/reports', function () {
+        return redirect()->route('sla-reports.index');
+    })->name('admin.support.reports');
+});

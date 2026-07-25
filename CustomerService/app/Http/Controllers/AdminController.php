@@ -16,7 +16,6 @@ class AdminController extends Controller
      */
     public function index() 
     {
-        // Update SLA metrics on dashboard load
         try {
             SlaCalculator::updateSlaData();
         } catch (\Exception $e) {
@@ -48,7 +47,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Show a Single Ticket Management Panel
+     * Show a Single Ticket (Agent View)
      */
     public function show(Ticket $ticket)
     {
@@ -61,10 +60,7 @@ class AdminController extends Controller
             ->take(5)
             ->get();
 
-
         return view('admin.show', compact('ticket', 'admins', 'notifications'));
-
-
     }
 
     /**
@@ -98,8 +94,8 @@ class AdminController extends Controller
         return view('admin.tickets.TicketsIndex', compact('tickets', 'notifications'));
     }
 
-        /**
-     * Agent Portal - Tickets List View (with animations)
+    /**
+     * Agent Portal - Tickets List View
      */
     public function agentTickets(Request $request)
     {
@@ -119,7 +115,7 @@ class AdminController extends Controller
         }
 
         $tickets = $query->orderBy('created_at', 'desc')->get();
-        
+
         $notifications = Ticket::with('customer')
             ->where('status', 'open')
             ->orderBy('created_at', 'desc')
@@ -129,39 +125,44 @@ class AdminController extends Controller
         return view('admin.agent', compact('tickets', 'notifications'));
     }
 
+    /**
+     * Update ticket status
+     */
     public function updateStatus(Request $request, Ticket $ticket)
     {
         $request->validate(['status' => 'required|in:open,in-progress,resolved,closed']);
+        $ticket->update(['status' => $request->status]);
 
-        $status = $request->status;
-        $updateData = ['status' => $status];
-
-        if ($status === 'in-progress' && !$ticket->responded_at) {
-            $updateData['responded_at'] = now();
+        try {
+            SlaCalculator::updateSlaData();
+        } catch (\Exception $e) {
+            \Log::error('SLA Update failed: ' . $e->getMessage());
         }
-        if ($status === 'resolved' && !$ticket->resolved_at) {
-            $updateData['resolved_at'] = now();
-        }
-
-        $ticket->update($updateData);
-
-        // Update SLA metrics after status change
-        SlaCalculator::updateSlaData();
 
         return back()->with('success', 'Ticket status updated successfully.');
     }
 
-    public function assignAgent(Request $request, Ticket $ticket)
+    /**
+     * Assign an agent to the ticket
+     */
+    public function assign(Request $request, Ticket $ticket)
     {
-        $request->validate(['agent_id' => 'required|exists:users,id']);
+        $request->validate(['agent_id' => 'nullable|exists:users,id']);
+
         $ticket->update(['agent_id' => $request->agent_id]);
 
-        // Update SLA metrics after assignment
-        SlaCalculator::updateSlaData();
+        $agentName = $ticket->fresh()->agent ? $ticket->fresh()->agent->name : null;
 
-        return back()->with('success', 'Ticket assigned successfully.');
+        return redirect()
+            ->route('admin.support.tickets.show', $ticket)
+            ->with('success', $agentName 
+                ? "Ticket assigned to {$agentName}." 
+                : 'Agent unassigned.');
     }
 
+    /**
+     * Post a reply to the ticket
+     */
     public function reply(Request $request, Ticket $ticket)
     {
         $request->validate(['body' => 'required|string']);
@@ -173,21 +174,71 @@ class AdminController extends Controller
         ]);
 
         if ($ticket->status === 'open') {
-            $ticket->update([
-                'status' => 'in-progress',
-                'responded_at' => $ticket->responded_at ?? now(),
-            ]);
+            $ticket->update(['status' => 'in-progress']);
         }
 
-        // Update SLA metrics after reply
-        SlaCalculator::updateSlaData();
+        if ($request->has('resolve_ticket')) {
+            $ticket->update(['status' => 'resolved']);
+        }
 
-        return back()->with('success', 'Reply posted successfully.');
+        try {
+            SlaCalculator::updateSlaData();
+        } catch (\Exception $e) {
+            \Log::error('SLA Update failed: ' . $e->getMessage());
+        }
+
+        return redirect()
+            ->route('admin.support.tickets.show', $ticket)
+            ->with('success', 'Reply posted successfully.');
+    }
+
+    /**
+     * Resolve the ticket
+     */
+    public function resolve(Ticket $ticket)
+    {
+        $ticket->update(['status' => 'resolved']);
+
+        return redirect()
+            ->route('admin.support.tickets.show', $ticket)
+            ->with('success', 'Ticket resolved successfully.');
+    }
+
+    /**
+     * Close the ticket
+     */
+    public function close(Ticket $ticket)
+    {
+        $ticket->update(['status' => 'closed']);
+
+        return redirect()
+            ->route('admin.support.tickets.show', $ticket)
+            ->with('success', 'Ticket closed successfully.');
+    }
+
+    /**
+     * Delete the ticket
+     */
+    public function destroy(Ticket $ticket)
+    {
+        $ticket->replies()->delete();
+        $ticket->delete();
+
+        return redirect()
+            ->route('agent')
+            ->with('success', 'Ticket deleted successfully.');
+    }
+
+    /**
+     * Show customer profile
+     */
+    public function showCustomer(User $customer)
+    {
+        return view('admin.customers.show', compact('customer'));
     }
 
     public function reports()
     {
-        // Update SLA data before showing reports
         try {
             SlaCalculator::updateSlaData();
         } catch (\Exception $e) {
@@ -203,4 +254,12 @@ class AdminController extends Controller
 
         return view('admin.reports', compact('totalResolved', 'notifications'));
     }
+
+    /**
+ * Legacy method for web.php route compatibility
+ */
+public function assignAgent(Request $request, Ticket $ticket)
+{
+    return $this->assign($request, $ticket);
+}
 }

@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SupportDesk - Ticket #{{ $ticket->ticket_reference }}</title>
-    
-    <!-- Fonts & Tailwind CSS CDN -->
+
     <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@100..1000&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -19,29 +18,18 @@
             }
         }
     </script>
-    
-    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    
-    <!-- Animations Setup -->
+
     <style>
         @keyframes detailFadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(16px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-
         .animate-detail-reveal {
             opacity: 0;
             animation: detailFadeInUp 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
             animation-delay: calc(var(--panel-index, 0) * 60ms);
         }
-
         .interactive-card {
             transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
@@ -54,13 +42,10 @@
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans antialiased min-h-screen flex overflow-hidden">
 
-    <!-- FIXED SIDEBAR -->
     <aside class="w-64 bg-white border-r border-gray-200 flex flex-col justify-between fixed h-full z-30">
         <div>
             <div class="p-6 border-b border-gray-100">
-                <h1 class="text-xl font-bold text-gray-900 flex items-center gap-2">
-                    SupportDesk
-                </h1>
+                <h1 class="text-xl font-bold text-gray-900 flex items-center gap-2">SupportDesk</h1>
                 <p class="text-xs text-gray-400 mt-1">Admin Support Portal</p>
             </div>
             <nav class="p-4 space-y-1">
@@ -78,19 +63,15 @@
                 </a>
             </nav>
         </div>
-
         <div class="p-4 border-t border-gray-100">
             <a href="#" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-purple-700 hover:bg-purple-50 rounded-lg transition-all duration-300">
-                <i data-lucide="user" class="w-5 h-5"></i>
-                Customer Portal
+                <i data-lucide="user" class="w-5 h-5"></i> Customer Portal
             </a>
         </div>
     </aside>
 
-    <!-- RIGHT CONTENT AREA -->
     <div class="flex-1 pl-64 flex flex-col h-screen overflow-hidden">
-        
-        <!-- STICKY HEADER NAVBAR -->
+
         <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8 sticky top-0 z-20 flex-shrink-0">
             <div class="relative w-96">
                 <i data-lucide="search" class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
@@ -113,31 +94,34 @@
             </div>
         </header>
 
-        <!-- INDEPENDENT SCROLLABLE BODY CONTAINER -->
         <main class="p-8 flex-1 overflow-y-auto h-[calc(100vh-4rem)]">
-            
-            <!-- Back Navigation -->
-            <a href="{{ route('agent') }}" class="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 text-sm font-medium hover:-translate-x-1 transition-all duration-300 mb-6">
+
+            @if(session('success'))
+                <div class="mb-4 p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700 text-sm font-medium flex items-center gap-2 animate-detail-reveal" style="--panel-index: 0;">
+                    <i data-lucide="check-circle" class="w-4 h-4"></i>
+                    {{ session('success') }}
+                </div>
+            @endif
+
+            <a href="{{ route('admin.support.tickets.index') }}" class="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 text-sm font-medium hover:-translate-x-1 transition-all duration-300 mb-6">
                 <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Tickets
             </a>
 
-            <!-- Grid Layout split -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-                
-                <!-- LEFT PANELS: Ticket Overview & Replies -->
+
                 <div class="lg:col-span-2 space-y-6">
-                    
-                    <!-- Ticket Main Header Card -->
+
                     <div class="animate-detail-reveal bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-4" style="--panel-index: 0;">
                         <div class="flex items-center justify-between flex-wrap gap-3">
                             <div class="flex items-center gap-2">
                                 <span class="text-xs font-bold text-gray-500 bg-gray-100 px-2.5 py-1 rounded">
                                     #{{ $ticket->ticket_reference }}
                                 </span>
-                                
+
                                 @php
                                     $statusColors = [
                                         'open' => 'bg-emerald-50 text-emerald-600',
+                                        'in-progress' => 'bg-amber-50 text-amber-600',
                                         'resolved' => 'bg-blue-50 text-blue-600',
                                         'closed' => 'bg-gray-100 text-gray-600',
                                     ];
@@ -161,8 +145,8 @@
                             </div>
 
                             <div class="flex items-center gap-2">
-                                @if($ticket->status !== 'resolved')
-                                    <form action="{{ route('admin.support.tickets.resolve', $ticket->id) }}" method="POST">
+                                @if($ticket->status !== 'resolved' && $ticket->status !== 'closed')
+                                    <form action="{{ route('admin.support.tickets.resolve', $ticket) }}" method="POST" class="inline">
                                         @csrf
                                         @method('PATCH')
                                         <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-all">
@@ -172,7 +156,7 @@
                                 @endif
 
                                 @if($ticket->status !== 'closed')
-                                    <form action="{{ route('admin.support.tickets.close', $ticket->id) }}" method="POST">
+                                    <form action="{{ route('admin.support.tickets.close', $ticket) }}" method="POST" class="inline">
                                         @csrf
                                         @method('PATCH')
                                         <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all">
@@ -182,7 +166,7 @@
                                 @endif
                             </div>
                         </div>
-                        
+
                         <div>
                             <h2 class="text-xl font-bold text-gray-900 mb-2">{{ $ticket->subject }}</h2>
                             <div class="p-4 bg-gray-50 border border-gray-100 rounded-lg text-sm text-gray-700 leading-relaxed">
@@ -192,12 +176,11 @@
 
                         <div class="flex items-center gap-2 pt-1">
                             <span class="inline-flex items-center gap-1 bg-gray-100 text-gray-600 text-xs px-2.5 py-1 rounded-md">
-                                <i data-lucide="tag" class="w-3 h-3"></i> {{ $ticket->category }}
+                                <i data-lucide="tag" class="w-3 h-3"></i> {{ $ticket->category ?? 'General' }}
                             </span>
                         </div>
                     </div>
 
-                    <!-- Activity & Notes Stream Card -->
                     <div class="animate-detail-reveal bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden" style="--panel-index: 1;">
                         <div class="p-4 border-b border-gray-100 bg-gray-50/50">
                             <h3 class="font-bold text-gray-900 text-base flex items-center gap-2">
@@ -209,29 +192,39 @@
                         <div class="p-6 space-y-6 flex flex-col gap-4">
                             @forelse($ticket->replies as $reply)
                                 @php
-                                    $isAuthUser = $reply->user_id === auth()->id();
+                                    $isAdmin = $reply->user && $reply->user->role === 'admin';
+                                    $isSystem = $reply->sender === 'System' || !$reply->user;
+                                    $isCurrentUser = $reply->user_id == auth()->id();
+                                    $displayName = $reply->user->name ?? $reply->sender ?? 'Unknown';
                                 @endphp
-                                <div class="flex gap-4 {{ $isAuthUser ? 'flex-row-reverse' : '' }}">
-                                    <div class="w-9 h-9 {{ $isAuthUser ? 'bg-blue-600 text-white' : ($reply->user->role === 'admin' ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-700') }} font-semibold rounded-full flex-shrink-0 flex items-center justify-center text-xs shadow-sm">
-                                        {{ strtoupper(substr($reply->user->name ?? 'U', 0, 2)) }}
-                                    </div>
 
-                                    <div class="space-y-1 flex-1 max-w-[80%] {{ $isAuthUser ? 'text-right' : '' }}">
-                                        <div class="flex items-baseline gap-2 {{ $isAuthUser ? 'justify-end' : 'justify-start' }}">
-                                            <h5 class="font-semibold text-sm text-gray-900">
-                                                {{ $reply->user->name ?? 'Unknown User' }}
-                                            </h5>
-                                            @if($reply->user->role === 'admin')
-                                                <span class="text-[10px] font-bold bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">Admin</span>
-                                            @endif
-                                            <span class="text-xs text-gray-400">{{ $reply->created_at->diffForHumans() }}</span>
+                                @if($isSystem)
+                                    <div class="flex justify-center">
+                                        <span class="text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full">
+                                            {{ $reply->body }}
+                                        </span>
+                                    </div>
+                                @else
+                                    <div class="flex gap-4 {{ $isAdmin ? 'flex-row-reverse' : '' }}">
+                                        <div class="w-9 h-9 {{ $isAdmin ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700' }} font-semibold rounded-full flex-shrink-0 flex items-center justify-center text-xs shadow-sm">
+                                            {{ strtoupper(substr($displayName, 0, 2)) }}
                                         </div>
 
-                                        <div class="inline-block p-4 rounded-xl text-sm leading-relaxed text-left shadow-sm {{ $isAuthUser ? 'bg-blue-600 text-white border border-blue-700' : 'bg-gray-50 text-gray-700 border border-gray-100' }}">
-                                            {{ $reply->message }}
+                                        <div class="space-y-1 flex-1 max-w-[80%] {{ $isAdmin ? 'text-right' : '' }}">
+                                            <div class="flex items-baseline gap-2 {{ $isAdmin ? 'justify-end' : 'justify-start' }}">
+                                                <h5 class="font-semibold text-sm text-gray-900">{{ $displayName }}</h5>
+                                                @if($isAdmin)
+                                                    <span class="text-[10px] font-bold bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">Admin</span>
+                                                @endif
+                                                <span class="text-xs text-gray-400">{{ $reply->created_at->diffForHumans() }}</span>
+                                            </div>
+
+                                            <div class="inline-block p-4 rounded-xl text-sm leading-relaxed text-left shadow-sm {{ $isAdmin ? 'bg-blue-600 text-white border border-blue-700' : 'bg-gray-50 text-gray-700 border border-gray-100' }}">
+                                                {{ $reply->body }}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
+                                @endif
                             @empty
                                 <div class="text-center text-gray-400 py-8">
                                     <i data-lucide="inbox" class="w-8 h-8 mx-auto stroke-1 mb-2"></i>
@@ -240,17 +233,16 @@
                             @endforelse
                         </div>
 
-                        <!-- Reply Input Form Block -->
-                        <form action="{{ route('admin.support.tickets.reply', $ticket->id) }}" method="POST" class="p-4 border-t border-gray-100 bg-gray-50/50 space-y-3">
+                        <form action="{{ route('admin.support.tickets.reply', $ticket) }}" method="POST" class="p-4 border-t border-gray-100 bg-gray-50/50 space-y-3">
                             @csrf
                             <div class="flex items-start gap-3">
                                 <div class="w-8 h-8 bg-blue-600 text-white rounded-full flex-shrink-0 flex items-center justify-center font-semibold text-xs mt-1 shadow-sm">
                                     {{ strtoupper(substr(auth()->user()->name ?? 'A', 0, 2)) }}
                                 </div>
                                 <div class="w-full">
-                                    <textarea name="message" rows="3" placeholder="Type your reply here..." required
-                                        class="w-full p-3 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none shadow-sm transition-all @error('message') border-red-500 @enderror"></textarea>
-                                    @error('message')
+                                    <textarea name="body" rows="3" placeholder="Type your reply here..." required
+                                        class="w-full p-3 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none shadow-sm transition-all @error('body') border-red-500 @enderror"></textarea>
+                                    @error('body')
                                         <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
                                     @enderror
                                 </div>
@@ -258,7 +250,7 @@
 
                             <div class="flex items-center justify-between pl-11">
                                 <label class="flex items-center gap-2 text-xs font-medium text-gray-600 cursor-pointer select-none group">
-                                    <input type="checkbox" name="resolve_ticket" id="resolveTicket" class="rounded text-blue-600 border-gray-300 focus:ring-blue-500 w-4 h-4 transition-all">
+                                    <input type="checkbox" name="resolve_ticket" class="rounded text-blue-600 border-gray-300 focus:ring-blue-500 w-4 h-4 transition-all">
                                     <span class="group-hover:text-gray-900 transition-colors">Mark ticket as resolved</span>
                                 </label>
 
@@ -270,21 +262,19 @@
                     </div>
                 </div>
 
-                <!-- RIGHT SIDEBAR: Parameter Panels -->
                 <div class="space-y-6">
 
-                    <!-- Customer Panel -->
                     <div class="animate-detail-reveal interactive-card bg-white border border-gray-200 rounded-xl p-5 shadow-sm space-y-4" style="--panel-index: 2;">
                         <h4 class="font-bold text-gray-900 text-sm flex items-center gap-2">
                             <i data-lucide="user" class="w-4 h-4 text-gray-500"></i> Customer Profile
                         </h4>
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 bg-gray-200 text-gray-700 rounded-full flex items-center justify-center font-bold text-sm shadow-sm">
-                                {{ strtoupper(substr($ticket->user->name ?? 'U', 0, 2)) }}
+                                {{ strtoupper(substr($ticket->customer->name ?? 'U', 0, 2)) }}
                             </div>
                             <div>
-                                <p class="font-bold text-sm text-gray-900">{{ $ticket->user->name ?? 'N/A' }}</p>
-                                <p class="text-xs text-gray-400">{{ $ticket->user->email ?? 'N/A' }}</p>
+                                <p class="font-bold text-sm text-gray-900">{{ $ticket->customer->name ?? 'N/A' }}</p>
+                                <p class="text-xs text-gray-400">{{ $ticket->customer->email ?? 'N/A' }}</p>
                             </div>
                         </div>
                         <a href="{{ route('admin.customers.show', $ticket->user_id) }}" class="block w-full text-center py-2 text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg active:scale-[0.98] transition-all">
@@ -292,24 +282,22 @@
                         </a>
                     </div>
 
-                    <!-- Details Assignment Panel -->
                     <div class="animate-detail-reveal interactive-card bg-white border border-gray-200 rounded-xl p-5 shadow-sm space-y-4" style="--panel-index: 3;">
                         <h4 class="font-bold text-gray-900 text-sm flex items-center gap-2">
                             <i data-lucide="sliders" class="w-4 h-4 text-gray-500"></i> Ticket Assignment
                         </h4>
-                        
-                        <form action="{{ route('admin.support.tickets.assign', $ticket->id) }}" method="POST" class="space-y-3">
+
+                        <form action="{{ route('admin.support.tickets.assign', $ticket) }}" method="POST" class="space-y-3">
                             @csrf
                             <div>
                                 <label class="text-[11px] font-semibold uppercase tracking-wider text-gray-400 block mb-1">Assign to Agent</label>
                                 <div class="flex gap-2">
                                     <select name="agent_id" class="w-full text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer">
                                         <option value="">-- Unassigned --</option>
-                                        @foreach($agents ?? [] as $agent)
-                                            <option value="{{ $agent->id }}" {{ $ticket->agent_id == $agent->id ? 'selected' : '' }}>
-                                                {{ $agent->name }}
-                                            </option>
-                                        @endforeach
+                                        <option value="1" {{ $ticket->agent_id == 1 ? 'selected' : '' }}>Louise Lane Parin</option>
+                                        <option value="2" {{ $ticket->agent_id == 2 ? 'selected' : '' }}>Prinz Geon Amparo</option>
+                                        <option value="3" {{ $ticket->agent_id == 3 ? 'selected' : '' }}>John Jerard Baluyot</option>
+                                        <option value="4" {{ $ticket->agent_id == 4 ? 'selected' : '' }}>Emmanuel Aragon</option>
                                     </select>
                                     <button type="submit" class="px-3 py-1.5 text-xs font-medium text-blue-600 border border-blue-200 hover:bg-blue-50 rounded-lg transition-colors">
                                         Save
@@ -319,20 +307,19 @@
                         </form>
                     </div>
 
-                    <!-- SLA Panel -->
                     <div class="animate-detail-reveal interactive-card bg-white border border-gray-200 rounded-xl p-5 shadow-sm space-y-4" style="--panel-index: 4;">
                         <h4 class="font-bold text-gray-900 text-sm flex items-center gap-2">
                             <i data-lucide="clock" class="w-4 h-4 text-gray-500"></i> SLA & Metrics
                         </h4>
-                        
+
                         <div class="space-y-3 text-xs">
                             <div>
                                 <span class="text-gray-400 font-medium block">First Response Time</span>
                                 <p class="font-semibold text-gray-800 mt-0.5">
-                                    @if($ticket->first_response_at)
+                                    @if($ticket->replies->where('user.role', 'admin')->count() > 0)
                                         <span class="text-emerald-600 inline-flex items-center gap-1">
                                             <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
-                                            {{ $ticket->first_response_at->diffForHumans($ticket->created_at) }}
+                                            Responded
                                         </span>
                                     @else
                                         <span class="text-amber-600 inline-flex items-center gap-1">
@@ -345,10 +332,10 @@
                             <div class="border-t border-gray-100 pt-2">
                                 <span class="text-gray-400 font-medium block">Resolution Time</span>
                                 <p class="font-semibold text-gray-800 mt-0.5">
-                                    @if($ticket->resolved_at)
+                                    @if($ticket->status === 'resolved')
                                         <span class="text-emerald-600 inline-flex items-center gap-1">
                                             <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
-                                            {{ $ticket->resolved_at->diffForHumans($ticket->created_at) }}
+                                            Resolved
                                         </span>
                                     @else
                                         <span class="text-amber-600 inline-flex items-center gap-1">
@@ -357,24 +344,9 @@
                                     @endif
                                 </p>
                             </div>
-
-                            @if($ticket->response_time_minutes)
-                                <div class="border-t border-gray-100 pt-2 flex justify-between">
-                                    <span class="text-gray-400 font-medium">Response (mins)</span>
-                                    <span class="font-bold text-gray-800">{{ number_format($ticket->response_time_minutes) }}</span>
-                                </div>
-                            @endif
-
-                            @if($ticket->resolution_time_minutes)
-                                <div class="border-t border-gray-100 pt-2 flex justify-between">
-                                    <span class="text-gray-400 font-medium">Resolution (mins)</span>
-                                    <span class="font-bold text-gray-800">{{ number_format($ticket->resolution_time_minutes) }}</span>
-                                </div>
-                            @endif
                         </div>
                     </div>
 
-                    <!-- Timeline Panel -->
                     <div class="animate-detail-reveal interactive-card bg-white border border-gray-200 rounded-xl p-5 shadow-sm space-y-3" style="--panel-index: 5;">
                         <h4 class="font-bold text-gray-900 text-sm flex items-center gap-2">
                             <i data-lucide="calendar" class="w-4 h-4 text-gray-500"></i> Timeline
@@ -391,12 +363,11 @@
                         </div>
                     </div>
 
-                    <!-- Danger Zone Panel -->
                     <div class="animate-detail-reveal interactive-card bg-white border border-red-100 rounded-xl p-5 shadow-sm space-y-3" style="--panel-index: 6;">
                         <h4 class="font-bold text-red-600 text-sm flex items-center gap-2">
                             <i data-lucide="trash-2" class="w-4 h-4"></i> Danger Zone
                         </h4>
-                        <form action="{{ route('admin.support.tickets.destroy', $ticket->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this ticket?');">
+                        <form action="{{ route('admin.support.tickets.destroy', $ticket) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this ticket?');">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="w-full text-center py-2 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg active:scale-[0.98] transition-all">
@@ -410,7 +381,6 @@
         </main>
     </div>
 
-    <!-- Lucide Icons Initialization Script -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             if (typeof lucide !== 'undefined') {
