@@ -64,7 +64,7 @@
             </nav>
         </div>
         <div class="p-4 border-t border-gray-100">
-            <a href="#" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-purple-700 hover:bg-purple-50 rounded-lg transition-all duration-300">
+            <a href="{{ route('CustomerPortal') }}" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-purple-700 hover:bg-purple-50 rounded-lg transition-all duration-300">
                 <i data-lucide="user" class="w-5 h-5"></i> Customer Portal
             </a>
         </div>
@@ -103,7 +103,7 @@
                 </div>
             @endif
 
-            <a href="{{ route('admin.support.tickets.index') }}" class="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 text-sm font-medium hover:-translate-x-1 transition-all duration-300 mb-6">
+            <a href="{{ route('agent') }}" class="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 text-sm font-medium hover:-translate-x-1 transition-all duration-300 mb-6">
                 <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Tickets
             </a>
 

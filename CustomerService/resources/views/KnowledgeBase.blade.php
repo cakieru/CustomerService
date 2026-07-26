@@ -19,7 +19,6 @@
     </script>
     <script src="https://unpkg.com/lucide@latest"></script>
 
-    <!-- Premium Portal Animations Setup (matching agent.blade) -->
     <style>
         body, * {
             font-family: 'Google Sans Flex', sans-serif !important;
@@ -41,7 +40,6 @@
             100% { opacity: 1; transform: scale(1); }
         }
 
-        /* Force standard layout grids so transforms actually work on table rows */
         .table-grid {
             display: grid;
             grid-template-columns: 0.8fr 2fr 1.5fr 1fr 1fr 1.2fr 1fr;
@@ -58,13 +56,11 @@
                 box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        /* Staggered entry animation exactly matching portal.blade */
         .animate-portal-reveal {
             animation: portalFadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
             animation-delay: calc(var(--row-index, 0) * 45ms);
         }
 
-        /* Ultra-smooth floating lift effect */
         .ticket-row:hover {
             background-color: #f8fafc !important;
             transform: translateY(-4px) scale(1.01);
@@ -73,9 +69,8 @@
             z-index: 10;
         }
 
-        /* Slim, rounded scrollbar to match the Tickets page */
         * {
-            scrollbar-width:auto ;
+            scrollbar-width: auto;
             scrollbar-color: #828282 transparent;
         }
         *::-webkit-scrollbar {
@@ -96,80 +91,79 @@
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans antialiased min-h-screen flex overflow-hidden">
 
-    <aside class="w-64 bg-white border-r border-gray-200 flex flex-col justify-between fixed h-full z-30">
+    <!-- Responsive Collapsible Sidebar -->
+    <aside class="w-16 sm:w-20 md:w-64 bg-white border-r border-gray-200 flex flex-col justify-between fixed h-full z-30 transition-all duration-300">
         <div>
-            <div class="p-6 border-b border-gray-100">
-                <h1 class="text-xl font-bold text-gray-900 flex items-center gap-2">
-                    SupportDesk
-                </h1>
-                <p class="text-xs text-gray-400 mt-1">E-commerce Support</p>
+            <!-- Header Logo -->
+            <div class="p-4 md:p-6 border-b border-gray-100 flex items-center justify-center md:justify-start gap-3">
+                
+                <div class="hidden md:block overflow-hidden whitespace-nowrap">
+                    <h1 class="text-lg font-bold text-gray-900 leading-tight">SupportDesk</h1>
+                    <p class="text-[10px] text-gray-400">E-commerce Support</p>
+                </div>
             </div>
-            <nav class="p-4 space-y-1">
-                <a href="{{ route('admin.support.dashboard') }}" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 transition-all duration-300">
-                    <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
+
+            <!-- Navigation Links -->
+            <nav class="p-2 md:p-4 space-y-1">
+                <a href="{{ route('admin.support.dashboard') }}" title="Dashboard" class="flex items-center justify-center md:justify-start gap-3 px-3 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 transition-all">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5 flex-shrink-0"></i>
+                    <span class="hidden md:inline whitespace-nowrap">Dashboard</span>
                 </a>
-                <a href="{{ route('agent') }}" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 transition-all duration-300">
-                    <i data-lucide="ticket" class="w-5 h-5"></i> Tickets
+                <a href="{{ route('agent') }}" title="Tickets" class="flex items-center justify-center md:justify-start gap-3 px-3 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 transition-all">
+                    <i data-lucide="ticket" class="w-5 h-5 flex-shrink-0"></i>
+                    <span class="hidden md:inline whitespace-nowrap">Tickets</span>
                 </a>
-                <a href="{{ route('KnowledgeBase') }}" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-blue-700 bg-blue-50 rounded-lg transition-all duration-300">
-                    <i data-lucide="book-open" class="w-5 h-5 text-blue-600"></i> Knowledge Base
+                <a href="{{ route('KnowledgeBase') }}" title="Knowledge Base" class="flex items-center justify-center md:justify-start gap-3 px-3 py-3 text-sm font-medium text-blue-700 bg-blue-50 rounded-lg transition-all">
+                    <i data-lucide="book-open" class="w-5 h-5 text-blue-600 flex-shrink-0"></i>
+                    <span class="hidden md:inline whitespace-nowrap">Knowledge Base</span>
                 </a>
-                <a href="{{ route('admin.support.reports') }}" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 transition-all duration-300">
-                    <i data-lucide="bar-chart-3" class="w-5 h-5"></i> SLA Reports
+                <a href="{{ route('admin.support.reports') }}" title="SLA Reports" class="flex items-center justify-center md:justify-start gap-3 px-3 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 transition-all">
+                    <i data-lucide="bar-chart-3" class="w-5 h-5 flex-shrink-0"></i>
+                    <span class="hidden md:inline whitespace-nowrap">SLA Reports</span>
                 </a>
             </nav>
         </div>
 
-        <div class="p-4 border-t border-gray-100">
-            <a href="{{ route('CustomerPortal') }}" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-purple-700 hover:bg-purple-50 rounded-lg transition-all duration-300">
-                <i data-lucide="user" class="w-5 h-5"></i>
-                Customer Portal
+        <!-- Sidebar Footer -->
+        <div class="p-2 md:p-4 border-t border-gray-100">
+            <a href="{{ route('CustomerPortal') }}" title="Customer Portal" class="flex items-center justify-center md:justify-start gap-3 px-3 py-3 text-sm font-medium text-purple-700 hover:bg-purple-50 rounded-lg transition-all">
+                <i data-lucide="user" class="w-5 h-5 flex-shrink-0"></i>
+                <span class="hidden md:inline whitespace-nowrap">Customer Portal</span>
             </a>
         </div>
     </aside>
 
-    <div class="flex-1 pl-64 flex flex-col h-screen overflow-hidden relative">
+    <!-- Main Content Wrapper (Adjusts padding based on sidebar size) -->
+    <div class="flex-1 pl-16 sm:pl-20 md:pl-64 flex flex-col h-screen overflow-hidden relative w-full transition-all duration-300">
         
-        <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8 sticky top-0 z-20 flex-shrink-0">
-            <div class="relative w-96">
+        <!-- Responsive Header -->
+        <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 sm:px-8 sticky top-0 z-20 flex-shrink-0">
+            <div class="relative w-48 sm:w-72 md:w-96">
                 <i data-lucide="search" class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
                 <input type="text" id="headerSearch" oninput="handleSearch(this.value)" placeholder="Search tickets, customers, articles..." class="w-full pl-10 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all">
             </div>
-            <div class="flex items-center gap-4">
 
-                <!-- Anchored Relative Parent Dropdown Holder -->
+            <div class="flex items-center gap-2 sm:gap-4">
+                <!-- Notifications -->
                 <div class="relative">
                     <button id="notiToggle" class="relative p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-all focus:outline-none">
                         <i data-lucide="bell" class="w-5 h-5"></i>
                         <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
                     </button>
 
-                    <!-- FLOATING NOTIFICATIONS POPUP (Anchored right beneath the bell) -->
-                    <div id="notiDropdown" class="hidden absolute right-0 mt-2 w-[360px] bg-white border border-gray-200 rounded-xl shadow-2xl z-50 flex flex-col overflow-hidden">
+                    <!-- Dropdown -->
+                    <div id="notiDropdown" class="hidden absolute right-0 mt-2 w-72 sm:w-[360px] bg-white border border-gray-200 rounded-xl shadow-2xl z-50 flex flex-col overflow-hidden">
                         <div class="p-4 border-b border-gray-100 flex items-center justify-between">
                             <h3 class="text-sm font-bold text-gray-900">Notifications</h3>
                             <button class="text-xs font-semibold text-blue-600 hover:underline">Mark all as read</button>
                         </div>
                         <div class="max-h-[380px] overflow-y-auto divide-y divide-gray-100">
-
-                            <!-- Notification 1: Matches TKT-1001 -->
                             <a href="{{ route('agent.ticket.details') }}" class="p-4 hover:bg-gray-50 transition-all flex items-start gap-3 relative block">
                                 <div class="w-8 h-8 rounded-full bg-orange-100 text-orange-700 flex-shrink-0 flex items-center justify-center font-bold text-xs">CC</div>
                                 <div class="flex-1 pr-3">
                                     <p class="text-xs font-bold text-gray-900">Overdue High Priority Ticket</p>
                                     <p class="text-[11px] text-gray-500 mt-0.5"><span class="text-blue-600 font-semibold">#TKT-1001</span>: Order not received after 10 days by Charlize Casama.</p>
                                     <span class="text-[10px] text-gray-400 block mt-1">Just now</span>
-                                </div>
-                                <span class="w-2 h-2 bg-blue-600 rounded-full absolute right-4 top-1/2 -translate-y-1/2"></span>
-                            </a>
-
-                            <!-- Notification 2: Matches TKT-1002 -->
-                            <a href="{{ route('agent.ticket.details') }}" class="p-4 hover:bg-gray-50 transition-all flex items-start gap-3 relative block">
-                                <div class="w-8 h-8 rounded-full bg-yellow-100 text-yellow-700 flex-shrink-0 flex items-center justify-center font-bold text-xs">GD</div>
-                                <div class="flex-1 pr-3">
-                                    <p class="text-xs font-bold text-gray-900">Overdue Medium Priority Ticket</p>
-                                    <p class="text-[11px] text-gray-500 mt-0.5"><span class="text-blue-600 font-semibold">#TKT-1002</span>: Received wrong item - ordered blue, got red by Gwen Dogelio.</p>
-                                    <span class="text-[10px] text-gray-400 block mt-1">15 min ago</span>
                                 </div>
                                 <span class="w-2 h-2 bg-blue-600 rounded-full absolute right-4 top-1/2 -translate-y-1/2"></span>
                             </a>
@@ -182,9 +176,10 @@
                     </div>
                 </div>
 
+                <!-- Profile -->
                 <div class="flex items-center gap-3 pl-2 border-l border-gray-200">
-                    <div class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-semibold text-xs">AD</div>
-                    <div>
+                    <div class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-semibold text-xs flex-shrink-0">AD</div>
+                    <div class="hidden sm:block">
                         <p class="text-xs font-semibold text-gray-900 leading-tight">Admin User</p>
                         <p class="text-[10px] text-gray-400">Support Manager</p>
                     </div>
@@ -192,13 +187,18 @@
             </div>
         </header>
 
-        <main class="p-8 flex-1 overflow-y-auto h-[calc(100vh-4rem)]">
+        <main class="p-4 sm:p-8 flex-1 overflow-y-auto h-[calc(100vh-4rem)]">
             <div id="appWorkspaceContainer" class="max-w-7xl w-full mx-auto space-y-6">
             </div>
         </main>
     </div>
 
     <script>
+        lucide.createIcons();
+
+        document.getElementById('notiToggle').addEventListener('click', function() {
+            document.getElementById('notiDropdown').classList.toggle('hidden');
+        });
     {{-- These comments tell your editor's linter what $articles/$categories are.
          Purely cosmetic - Laravel already injects them via compact() in the controller. --}}
     {{-- @var \Illuminate\Support\Collection $articles --}}
