@@ -134,7 +134,7 @@
                                 <div>
                                     <h4 class="font-bold text-sm text-gray-900 flex items-center gap-2">
                                         {{ auth()->user()->name ?? 'You' }} 
-                                        <span class="text-gray-400 font-medium text-xs">&mdash; You</span>
+                                        <span class="text-gray-400 font-medium text-xs">— You</span>
                                     </h4>
                                 </div>
                             </div>
@@ -143,35 +143,9 @@
                         <div class="p-6 text-sm text-gray-600 leading-relaxed font-normal whitespace-pre-wrap">{{ $ticket->description ?? $ticket->message ?? 'No description provided.' }}</div>
                     </div>
 
-                    <!-- Reply Form -->
-                    <div class="animate-reveal-card bg-white border border-gray-200 rounded-3xl p-6 shadow-sm space-y-4" style="--card-index: 3;">
-                        <h3 class="text-lg font-bold text-gray-900">Add a reply</h3>
-                        <form action="{{ route('customer.tickets.reply', $ticket->id) }}" method="POST" class="space-y-4">
-                            @csrf
-                            
-                            <div>
-                                <textarea 
-                                    name="body"
-                                    rows="4" 
-                                    required
-                                    placeholder="Add more details, ask a follow-up, or provide additional information..." 
-                                    class="w-full p-4 text-sm bg-white border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none transition-all"
-                                ></textarea>
-                            </div>
-                            <div class="flex items-center justify-between border-t border-gray-100 pt-4">
-                                <button type="button" class="flex items-center gap-2 px-4 py-2 text-xs font-semibold text-gray-600 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-full transition-all">
-                                    <i data-lucide="paperclip" class="w-3.5 h-3.5"></i> Attach file
-                                </button>
-                                <button type="submit" class="px-6 py-2.5 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow active:scale-[0.98] transition-all">
-                                    Send Reply
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-
-                    <!-- Conversation Thread -->
+                    <!-- Conversation Thread (moved UP before reply form) -->
                     @forelse($replies as $index => $msg)
-                        <div class="animate-reveal-card bg-white border border-gray-200/90 rounded-3xl shadow-[0_2px_12px_rgba(0,0,0,0.01)] overflow-hidden" style="--card-index: {{ $index + 4 }};">
+                        <div class="animate-reveal-card bg-white border border-gray-200/90 rounded-3xl shadow-[0_2px_12px_rgba(0,0,0,0.01)] overflow-hidden" style="--card-index: {{ $index + 3 }};">
                             <div class="bg-gray-50/70 px-6 py-4 border-b border-gray-100 flex items-center justify-between">
                                 <div class="flex items-center gap-3">
                                     @if($msg->sender == 'Customer')
@@ -198,7 +172,7 @@
                             </div>
                         </div>
                     @empty
-                        <div class="animate-reveal-card bg-white border border-gray-200/90 rounded-3xl p-10 shadow-[0_2px_12px_rgba(0,0,0,0.01)] flex flex-col items-center justify-center text-center space-y-4" style="--card-index: 4;">
+                        <div class="animate-reveal-card bg-white border border-gray-200/90 rounded-3xl p-10 shadow-[0_2px_12px_rgba(0,0,0,0.01)] flex flex-col items-center justify-center text-center space-y-4" style="--card-index: 3;">
                             <div class="w-12 h-12 bg-gray-50 text-gray-400 border border-gray-100 rounded-full flex items-center justify-center shadow-sm">
                                 <i data-lucide="clock" class="w-6 h-6 stroke-[1.5]"></i>
                             </div>
@@ -208,6 +182,62 @@
                             </div>
                         </div>
                     @endforelse
+
+                    <!-- Reply Form (moved DOWN to bottom) -->
+                    <!-- Reply Form -->
+                    <div class="animate-reveal-card bg-white border border-gray-200 rounded-3xl p-6 shadow-sm space-y-4" style="--card-index: {{ count($replies) + 3 }};">
+                        <h3 class="text-lg font-bold text-gray-900">Add a reply</h3>
+                        <form action="{{ route('customer.tickets.reply', $ticket->id) }}" method="POST" enctype="multipart/form-data" class="space-y-4">
+                            @csrf
+                            
+                            <div>
+                                <textarea 
+                                    name="body"
+                                    rows="4" 
+                                    placeholder="Add more details, ask a follow-up, or provide additional information..." 
+                                    class="w-full p-4 text-sm bg-white border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none transition-all"
+                                ></textarea>
+                            </div>
+                            
+                            <div class="flex items-center justify-between border-t border-gray-100 pt-4">
+                                <label class="flex items-center gap-2 px-4 py-2 text-xs font-semibold text-gray-600 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-full transition-all cursor-pointer">
+                                    <i data-lucide="paperclip" class="w-3.5 h-3.5"></i> 
+                                    <span id="attachLabel">Attach file</span>
+                                    <input type="file" name="attachments[]" multiple class="hidden" onchange="handleFileSelect(this)">
+                                </label>
+                                <span id="fileCount" class="text-xs text-gray-500 font-medium"></span>
+                                <button type="submit" class="px-6 py-2.5 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow active:scale-[0.98] transition-all">
+                                    Send Reply
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Attachments appear in the chat thread -->
+                    @if($attachments && $attachments->count() > 0)
+                    <div class="animate-reveal-card bg-white border border-blue-100 rounded-3xl shadow-[0_2px_12px_rgba(0,0,0,0.01)] overflow-hidden" style="--card-index: {{ count($replies) + 4 }};">
+                        <div class="bg-blue-50/50 px-6 py-4 border-b border-blue-100 flex items-center gap-3">
+                            <div class="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center">
+                                <i data-lucide="paperclip" class="w-4 h-4"></i>
+                            </div>
+                            <h4 class="font-bold text-sm text-gray-900">Attached Files ({{ $attachments->count() }})</h4>
+                        </div>
+                        <div class="p-6 space-y-3">
+                            @foreach($attachments as $file)
+                            <a href="{{ asset('storage/' . $file->path) }}" target="_blank" class="flex items-center gap-3 p-3 bg-gray-50 border border-gray-100 rounded-xl hover:bg-blue-50/30 transition group">
+                                <div class="w-10 h-10 bg-white border border-gray-100 rounded-lg flex items-center justify-center text-blue-500 shadow-sm">
+                                    <i data-lucide="file" class="w-5 h-5"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm font-semibold text-gray-900 truncate">{{ $file->filename }}</p>
+                                    <p class="text-[11px] text-gray-400">Click to download/view</p>
+                                </div>
+                                <i data-lucide="external-link" class="w-4 h-4 text-gray-400 group-hover:text-blue-600 transition"></i>
+                            </a>
+                            @endforeach
+                        </div>
+                    </div>
+                    @endif
 
                 </div>
 
@@ -318,6 +348,26 @@
         document.addEventListener('DOMContentLoaded', () => {
             if (window.lucide) lucide.createIcons();
         });
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.lucide) lucide.createIcons();
+        });
+        
+        function handleFileSelect(input) {
+            const count = input.files.length;
+            const label = document.getElementById('attachLabel');
+            const countLabel = document.getElementById('fileCount');
+            
+            if (count > 0) {
+                label.textContent = count === 1 ? input.files[0].name : `${count} files selected`;
+                countLabel.textContent = '';
+            } else {
+                label.textContent = 'Attach file';
+                countLabel.textContent = '';
+            }
+        }
     </script>
 </body>
 </html>

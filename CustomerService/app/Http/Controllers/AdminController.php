@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\SlaCalculator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class AdminController extends Controller
 {
@@ -272,4 +273,61 @@ public function assignAgent(Request $request, $ticket)
     return back()->with('success', 'Agent assigned successfully.');
 }
 
+    /**
+     * Save admin-only notes for the ticket
+     */
+    public function updateNotes(Request $request, Ticket $ticket)
+    {
+        $request->validate([
+            'admin_notes' => 'nullable|string|max:5000',
+        ]);
+
+        $ticket->update([
+            'admin_notes' => $request->admin_notes,
+        ]);
+
+        return redirect()
+            ->route('admin.support.tickets.show', $ticket)
+            ->with('success', 'Admin notes saved successfully.');
+    }
+
+    
+
+    /**
+         * Update ticket priority and recalculate SLA due date
+         */
+            /**
+     * Update ticket priority and recalculate SLA due date
+     */
+    public function updatePriority(Request $request, Ticket $ticket)
+    {
+        $request->validate([
+            'priority' => 'required|in:critical,high,medium,low',
+        ]);
+
+        $priority = strtolower($request->priority);
+        $priorityLevel = ucfirst($priority);
+
+        $hours = match ($priority) {
+            'critical' => 4,
+            'high'     => 8,
+            'medium'   => 16,
+            'low'      => 24,
+            default    => 24,
+        };
+
+        $ticket->update([
+            'priority'       => $priority,
+            'priority_level' => $priorityLevel,
+            'due_date'       => now()->addHours($hours),
+        ]);
+
+        try {
+            SlaCalculator::updateSlaData();
+        } catch (\Exception $e) {
+            \Log::error('SLA Update failed after priority change: ' . $e->getMessage());
+        }
+
+        return back()->with('success', "Priority updated to {$priorityLevel}. Due date set to " . now()->addHours($hours)->format('M d, Y g:i A') . ".");
+    }
 }

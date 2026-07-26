@@ -154,7 +154,7 @@ try {
     // SLA failed but reply was saved
 }
 
-        return redirect('/tickets')->with('success', 'Ticket created successfully!');
+        return redirect()->route('customer.tickets')->with('success', 'Ticket created successfully!');
     }
 
     /**

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SupportDesk - Ticket #{{ $ticket->ticket_reference }}</title>
+    <title>SupportDesk - Ticket #<?php echo e($ticket->ticket_reference); ?></title>
 
     <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@100..1000&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -49,22 +49,22 @@
                 <p class="text-xs text-gray-400 mt-1">Admin Support Portal</p>
             </div>
             <nav class="p-4 space-y-1">
-                <a href="{{ route('admin.support.dashboard') }}" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 transition-all duration-300">
+                <a href="<?php echo e(route('admin.support.dashboard')); ?>" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 transition-all duration-300">
                     <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
                 </a>
-                <a href="{{ route('agent') }}" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-blue-700 bg-blue-50 rounded-lg transition-all duration-300">
+                <a href="<?php echo e(route('agent')); ?>" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-blue-700 bg-blue-50 rounded-lg transition-all duration-300">
                     <i data-lucide="ticket" class="w-5 h-5 text-blue-600"></i> Tickets
                 </a>
-                <a href="{{ route('KnowledgeBase') }}" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 transition-all duration-300">
+                <a href="<?php echo e(route('KnowledgeBase')); ?>" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 transition-all duration-300">
                     <i data-lucide="book-open" class="w-5 h-5"></i> Knowledge Base
                 </a>
-                <a href="{{ route('admin.support.reports') }}" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 transition-all duration-300">
+                <a href="<?php echo e(route('admin.support.reports')); ?>" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 transition-all duration-300">
                     <i data-lucide="bar-chart-3" class="w-5 h-5"></i> SLA Reports
                 </a>
             </nav>
         </div>
         <div class="p-4 border-t border-gray-100">
-            <a href="{{ route('CustomerPortal') }}" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-purple-700 hover:bg-purple-50 rounded-lg transition-all duration-300">
+            <a href="<?php echo e(route('CustomerPortal')); ?>" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-purple-700 hover:bg-purple-50 rounded-lg transition-all duration-300">
                 <i data-lucide="user" class="w-5 h-5"></i> Customer Portal
             </a>
         </div>
@@ -84,10 +84,11 @@
                 </button>
                 <div class="flex items-center gap-3 pl-2 border-l border-gray-200">
                     <div class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-semibold text-xs">
-                        {{ strtoupper(substr(auth()->user()->name ?? 'AD', 0, 2)) }}
+                        <?php echo e(strtoupper(substr(auth()->user()->name ?? 'AD', 0, 2))); ?>
+
                     </div>
                     <div>
-                        <p class="text-xs font-semibold text-gray-900 leading-tight">{{ auth()->user()->name ?? 'Admin User' }}</p>
+                        <p class="text-xs font-semibold text-gray-900 leading-tight"><?php echo e(auth()->user()->name ?? 'Admin User'); ?></p>
                         <p class="text-[10px] text-gray-400">Support Administrator</p>
                     </div>
                 </div>
@@ -96,14 +97,15 @@
 
         <main class="p-8 flex-1 overflow-y-auto h-[calc(100vh-4rem)]">
 
-            @if(session('success'))
+            <?php if(session('success')): ?>
                 <div class="mb-4 p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700 text-sm font-medium flex items-center gap-2 animate-detail-reveal" style="--panel-index: 0;">
                     <i data-lucide="check-circle" class="w-4 h-4"></i>
-                    {{ session('success') }}
-                </div>
-            @endif
+                    <?php echo e(session('success')); ?>
 
-            <a href="{{ route('agent') }}" class="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 text-sm font-medium hover:-translate-x-1 transition-all duration-300 mb-6">
+                </div>
+            <?php endif; ?>
+
+            <a href="<?php echo e(route('agent')); ?>" class="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 text-sm font-medium hover:-translate-x-1 transition-all duration-300 mb-6">
                 <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Tickets
             </a>
 
@@ -115,10 +117,11 @@
                         <div class="flex items-center justify-between flex-wrap gap-3">
                             <div class="flex items-center gap-2">
                                 <span class="text-xs font-bold text-gray-500 bg-gray-100 px-2.5 py-1 rounded">
-                                    #{{ $ticket->ticket_reference }}
+                                    #<?php echo e($ticket->ticket_reference); ?>
+
                                 </span>
 
-                                @php
+                                <?php
                                     $statusColors = [
                                         'open' => 'bg-emerald-50 text-emerald-600',
                                         'in-progress' => 'bg-amber-50 text-amber-600',
@@ -126,57 +129,60 @@
                                         'closed' => 'bg-gray-100 text-gray-600',
                                     ];
                                     $statusClass = $statusColors[$ticket->status] ?? 'bg-gray-100 text-gray-600';
-                                @endphp
-                                <span class="text-xs font-semibold px-2.5 py-1 rounded uppercase {{ $statusClass }}">
-                                    {{ $ticket->status }}
+                                ?>
+                                <span class="text-xs font-semibold px-2.5 py-1 rounded uppercase <?php echo e($statusClass); ?>">
+                                    <?php echo e($ticket->status); ?>
+
                                 </span>
 
-                                @php
+                                <?php
                                     $priorityColors = [
                                         'high' => 'bg-red-50 text-red-600',
                                         'medium' => 'bg-amber-50 text-amber-600',
                                         'low' => 'bg-blue-50 text-blue-600',
                                     ];
                                     $priorityClass = $priorityColors[$ticket->priority] ?? 'bg-gray-100 text-gray-600';
-                                @endphp
-                                <span class="text-xs font-semibold px-2.5 py-1 rounded uppercase {{ $priorityClass }}">
-                                    {{ $ticket->priority }} Priority
+                                ?>
+                                <span class="text-xs font-semibold px-2.5 py-1 rounded uppercase <?php echo e($priorityClass); ?>">
+                                    <?php echo e($ticket->priority); ?> Priority
                                 </span>
                             </div>
 
                             <div class="flex items-center gap-2">
-                                @if($ticket->status !== 'resolved' && $ticket->status !== 'closed')
-                                    <form action="{{ route('admin.support.tickets.resolve', $ticket) }}" method="POST" class="inline">
-                                        @csrf
-                                        @method('PATCH')
+                                <?php if($ticket->status !== 'resolved' && $ticket->status !== 'closed'): ?>
+                                    <form action="<?php echo e(route('admin.support.tickets.resolve', $ticket)); ?>" method="POST" class="inline">
+                                        <?php echo csrf_field(); ?>
+                                        <?php echo method_field('PATCH'); ?>
                                         <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-all">
                                             <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Resolve
                                         </button>
                                     </form>
-                                @endif
+                                <?php endif; ?>
 
-                                @if($ticket->status !== 'closed')
-                                    <form action="{{ route('admin.support.tickets.close', $ticket) }}" method="POST" class="inline">
-                                        @csrf
-                                        @method('PATCH')
+                                <?php if($ticket->status !== 'closed'): ?>
+                                    <form action="<?php echo e(route('admin.support.tickets.close', $ticket)); ?>" method="POST" class="inline">
+                                        <?php echo csrf_field(); ?>
+                                        <?php echo method_field('PATCH'); ?>
                                         <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all">
                                             <i data-lucide="x-circle" class="w-3.5 h-3.5"></i> Close
                                         </button>
                                     </form>
-                                @endif
+                                <?php endif; ?>
                             </div>
                         </div>
 
                         <div>
-                            <h2 class="text-xl font-bold text-gray-900 mb-2">{{ $ticket->subject }}</h2>
+                            <h2 class="text-xl font-bold text-gray-900 mb-2"><?php echo e($ticket->subject); ?></h2>
                             <div class="p-4 bg-gray-50 border border-gray-100 rounded-lg text-sm text-gray-700 leading-relaxed">
-                                {{ $ticket->description }}
+                                <?php echo e($ticket->description); ?>
+
                             </div>
                         </div>
 
                         <div class="flex items-center gap-2 pt-1">
                             <span class="inline-flex items-center gap-1 bg-gray-100 text-gray-600 text-xs px-2.5 py-1 rounded-md">
-                                <i data-lucide="tag" class="w-3 h-3"></i> {{ $ticket->category ?? 'General' }}
+                                <i data-lucide="tag" class="w-3 h-3"></i> <?php echo e($ticket->category ?? 'General'); ?>
+
                             </span>
                         </div>
                     </div>
@@ -185,66 +191,84 @@
                         <div class="p-4 border-b border-gray-100 bg-gray-50/50">
                             <h3 class="font-bold text-gray-900 text-base flex items-center gap-2">
                                 <i data-lucide="message-square" class="w-4 h-4 text-blue-600"></i>
-                                Activity & Replies ({{ $ticket->replies->count() }})
+                                Activity & Replies (<?php echo e($ticket->replies->count()); ?>)
                             </h3>
                         </div>
 
                         <div class="p-6 space-y-6 flex flex-col gap-4">
-                            @forelse($ticket->replies as $reply)
-                                @php
+                            <?php $__empty_1 = true; $__currentLoopData = $ticket->replies; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $reply): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                                <?php
                                     $isAdmin = $reply->user && $reply->user->role === 'admin';
                                     $isSystem = $reply->sender === 'System' || !$reply->user;
                                     $isCurrentUser = $reply->user_id == auth()->id();
                                     $displayName = $reply->user->name ?? $reply->sender ?? 'Unknown';
-                                @endphp
+                                ?>
 
-                                @if($isSystem)
+                                <?php if($isSystem): ?>
                                     <div class="flex justify-center">
                                         <span class="text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full">
-                                            {{ $reply->body }}
+                                            <?php echo e($reply->body); ?>
+
                                         </span>
                                     </div>
-                                @else
-                                    <div class="flex gap-4 {{ $isAdmin ? 'flex-row-reverse' : '' }}">
-                                        <div class="w-9 h-9 {{ $isAdmin ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700' }} font-semibold rounded-full flex-shrink-0 flex items-center justify-center text-xs shadow-sm">
-                                            {{ strtoupper(substr($displayName, 0, 2)) }}
+                                <?php else: ?>
+                                    <div class="flex gap-4 <?php echo e($isAdmin ? 'flex-row-reverse' : ''); ?>">
+                                        <div class="w-9 h-9 <?php echo e($isAdmin ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'); ?> font-semibold rounded-full flex-shrink-0 flex items-center justify-center text-xs shadow-sm">
+                                            <?php echo e(strtoupper(substr($displayName, 0, 2))); ?>
+
                                         </div>
 
-                                        <div class="space-y-1 flex-1 max-w-[80%] {{ $isAdmin ? 'text-right' : '' }}">
-                                            <div class="flex items-baseline gap-2 {{ $isAdmin ? 'justify-end' : 'justify-start' }}">
-                                                <h5 class="font-semibold text-sm text-gray-900">{{ $displayName }}</h5>
-                                                @if($isAdmin)
+                                        <div class="space-y-1 flex-1 max-w-[80%] <?php echo e($isAdmin ? 'text-right' : ''); ?>">
+                                            <div class="flex items-baseline gap-2 <?php echo e($isAdmin ? 'justify-end' : 'justify-start'); ?>">
+                                                <h5 class="font-semibold text-sm text-gray-900"><?php echo e($displayName); ?></h5>
+                                                <?php if($isAdmin): ?>
                                                     <span class="text-[10px] font-bold bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">Admin</span>
-                                                @endif
-                                                <span class="text-xs text-gray-400">{{ $reply->created_at->diffForHumans() }}</span>
+                                                <?php endif; ?>
+                                                <span class="text-xs text-gray-400"><?php echo e($reply->created_at->diffForHumans()); ?></span>
                                             </div>
 
-                                            <div class="inline-block p-4 rounded-xl text-sm leading-relaxed text-left shadow-sm {{ $isAdmin ? 'bg-blue-600 text-white border border-blue-700' : 'bg-gray-50 text-gray-700 border border-gray-100' }}">
-                                                {{ $reply->body }}
+                                            <div class="inline-block p-4 rounded-xl text-sm leading-relaxed text-left shadow-sm <?php echo e($isAdmin ? 'bg-blue-600 text-white border border-blue-700' : 'bg-gray-50 text-gray-700 border border-gray-100'); ?>">
+                                                <?php echo e($reply->body); ?>
+
                                             </div>
                                         </div>
                                     </div>
-                                @endif
-                            @empty
+                                <?php endif; ?>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                                 <div class="text-center text-gray-400 py-8">
                                     <i data-lucide="inbox" class="w-8 h-8 mx-auto stroke-1 mb-2"></i>
                                     <p class="text-sm">No replies yet. Be the first to respond!</p>
                                 </div>
-                            @endforelse
+                            <?php endif; ?>
                         </div>
 
-                        <form action="{{ route('admin.support.tickets.reply', $ticket) }}" method="POST" class="p-4 border-t border-gray-100 bg-gray-50/50 space-y-3">
-                            @csrf
+                        <form action="<?php echo e(route('admin.support.tickets.reply', $ticket)); ?>" method="POST" class="p-4 border-t border-gray-100 bg-gray-50/50 space-y-3">
+                            <?php echo csrf_field(); ?>
                             <div class="flex items-start gap-3">
                                 <div class="w-8 h-8 bg-blue-600 text-white rounded-full flex-shrink-0 flex items-center justify-center font-semibold text-xs mt-1 shadow-sm">
-                                    {{ strtoupper(substr(auth()->user()->name ?? 'A', 0, 2)) }}
+                                    <?php echo e(strtoupper(substr(auth()->user()->name ?? 'A', 0, 2))); ?>
+
                                 </div>
                                 <div class="w-full">
                                     <textarea name="body" rows="3" placeholder="Type your reply here..." required
-                                        class="w-full p-3 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none shadow-sm transition-all @error('body') border-red-500 @enderror"></textarea>
-                                    @error('body')
-                                        <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
-                                    @enderror
+                                        class="w-full p-3 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none shadow-sm transition-all <?php $__errorArgs = ['body'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> border-red-500 <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>"></textarea>
+                                    <?php $__errorArgs = ['body'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                                        <p class="text-xs text-red-500 mt-1"><?php echo e($message); ?></p>
+                                    <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                                 </div>
                             </div>
 
@@ -270,14 +294,15 @@
                         </h4>
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 bg-gray-200 text-gray-700 rounded-full flex items-center justify-center font-bold text-sm shadow-sm">
-                                {{ strtoupper(substr($ticket->customer->name ?? 'U', 0, 2)) }}
+                                <?php echo e(strtoupper(substr($ticket->customer->name ?? 'U', 0, 2))); ?>
+
                             </div>
                             <div>
-                                <p class="font-bold text-sm text-gray-900">{{ $ticket->customer->name ?? 'N/A' }}</p>
-                                <p class="text-xs text-gray-400">{{ $ticket->customer->email ?? 'N/A' }}</p>
+                                <p class="font-bold text-sm text-gray-900"><?php echo e($ticket->customer->name ?? 'N/A'); ?></p>
+                                <p class="text-xs text-gray-400"><?php echo e($ticket->customer->email ?? 'N/A'); ?></p>
                             </div>
                         </div>
-                        <a href="{{ route('admin.customers.show', $ticket->user_id) }}" class="block w-full text-center py-2 text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg active:scale-[0.98] transition-all">
+                        <a href="<?php echo e(route('admin.customers.show', $ticket->user_id)); ?>" class="block w-full text-center py-2 text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg active:scale-[0.98] transition-all">
                             View Customer Profile
                         </a>
                     </div>
@@ -288,18 +313,19 @@
                         </h4>
 
                         <!-- Assign Agent -->
-                        <form action="{{ route('admin.support.tickets.assign', $ticket) }}" method="POST" class="space-y-3">
-                            @csrf
+                        <form action="<?php echo e(route('admin.support.tickets.assign', $ticket)); ?>" method="POST" class="space-y-3">
+                            <?php echo csrf_field(); ?>
                             <div>
                                 <label class="text-[11px] font-semibold uppercase tracking-wider text-gray-400 block mb-1">Assign to Agent</label>
                                 <div class="flex gap-2">
                                     <select name="agent_id" class="w-full text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer">
                                         <option value="">-- Unassigned --</option>
-                                        @foreach(\App\Models\User::where('role', 'admin')->orderBy('name')->get() as $agent)
-                                            <option value="{{ $agent->id }}" {{ $ticket->agent_id == $agent->id ? 'selected' : '' }}>
-                                                {{ $agent->name }}
+                                        <?php $__currentLoopData = \App\Models\User::where('role', 'admin')->orderBy('name')->get(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $agent): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                            <option value="<?php echo e($agent->id); ?>" <?php echo e($ticket->agent_id == $agent->id ? 'selected' : ''); ?>>
+                                                <?php echo e($agent->name); ?>
+
                                             </option>
-                                        @endforeach
+                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                     </select>
                                     <button type="submit" class="px-3 py-1.5 text-xs font-medium text-blue-600 border border-blue-200 hover:bg-blue-50 rounded-lg transition-colors">
                                         Save
@@ -309,16 +335,16 @@
                         </form>
 
                         <!-- Update Priority -->
-                        <form action="{{ route('admin.support.tickets.priority', $ticket) }}" method="POST" class="space-y-3">
-                            @csrf
+                        <form action="<?php echo e(route('admin.support.tickets.priority', $ticket)); ?>" method="POST" class="space-y-3">
+                            <?php echo csrf_field(); ?>
                             <div>
                                 <label class="text-[11px] font-semibold uppercase tracking-wider text-gray-400 block mb-1">Priority Level</label>
                                 <div class="flex gap-2">
                                     <select name="priority" class="w-full text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer">
-                                        <option value="critical" {{ $ticket->priority === 'critical' ? 'selected' : '' }}>Critical (4h SLA)</option>
-                                        <option value="high" {{ $ticket->priority === 'high' ? 'selected' : '' }}>High (8h SLA)</option>
-                                        <option value="medium" {{ $ticket->priority === 'medium' ? 'selected' : '' }}>Medium (16h SLA)</option>
-                                        <option value="low" {{ $ticket->priority === 'low' ? 'selected' : '' }}>Low (24h SLA)</option>
+                                        <option value="critical" <?php echo e($ticket->priority === 'critical' ? 'selected' : ''); ?>>Critical (4h SLA)</option>
+                                        <option value="high" <?php echo e($ticket->priority === 'high' ? 'selected' : ''); ?>>High (8h SLA)</option>
+                                        <option value="medium" <?php echo e($ticket->priority === 'medium' ? 'selected' : ''); ?>>Medium (16h SLA)</option>
+                                        <option value="low" <?php echo e($ticket->priority === 'low' ? 'selected' : ''); ?>>Low (24h SLA)</option>
                                     </select>
                                     <button type="submit" class="px-3 py-1.5 text-xs font-medium text-emerald-600 border border-emerald-200 hover:bg-emerald-50 rounded-lg transition-colors">
                                         Update
@@ -334,15 +360,15 @@
                             <i data-lucide="file-text" class="w-4 h-4 text-gray-500"></i> Admin Notepad
                         </h4>
                         
-                        <form action="{{ route('admin.support.tickets.notes', $ticket) }}" method="POST" class="space-y-3">
-                            @csrf
+                        <form action="<?php echo e(route('admin.support.tickets.notes', $ticket)); ?>" method="POST" class="space-y-3">
+                            <?php echo csrf_field(); ?>
                             <div>
                                 <textarea 
                                     name="admin_notes" 
                                     rows="5" 
                                     placeholder="Write internal notes, next steps, or reminders about this ticket…"
                                     class="w-full p-3 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none transition-all"
-                                >{{ old('admin_notes', $ticket->admin_notes) }}</textarea>
+                                ><?php echo e(old('admin_notes', $ticket->admin_notes)); ?></textarea>
                             </div>
                             <button type="submit" class="w-full text-center py-2 text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg active:scale-[0.98] transition-all">
                                 Save Notes
@@ -359,32 +385,32 @@
                             <div>
                                 <span class="text-gray-400 font-medium block">First Response Time</span>
                                 <p class="font-semibold text-gray-800 mt-0.5">
-                                    @if($ticket->replies->where('user.role', 'admin')->count() > 0)
+                                    <?php if($ticket->replies->where('user.role', 'admin')->count() > 0): ?>
                                         <span class="text-emerald-600 inline-flex items-center gap-1">
                                             <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
                                             Responded
                                         </span>
-                                    @else
+                                    <?php else: ?>
                                         <span class="text-amber-600 inline-flex items-center gap-1">
                                             <i data-lucide="hourglass" class="w-3.5 h-3.5"></i> Awaiting response
                                         </span>
-                                    @endif
+                                    <?php endif; ?>
                                 </p>
                             </div>
 
                             <div class="border-t border-gray-100 pt-2">
                                 <span class="text-gray-400 font-medium block">Resolution Time</span>
                                 <p class="font-semibold text-gray-800 mt-0.5">
-                                    @if($ticket->status === 'resolved')
+                                    <?php if($ticket->status === 'resolved'): ?>
                                         <span class="text-emerald-600 inline-flex items-center gap-1">
                                             <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
                                             Resolved
                                         </span>
-                                    @else
+                                    <?php else: ?>
                                         <span class="text-amber-600 inline-flex items-center gap-1">
                                             <i data-lucide="hourglass" class="w-3.5 h-3.5"></i> Not resolved yet
                                         </span>
-                                    @endif
+                                    <?php endif; ?>
                                 </p>
                             </div>
                         </div>
@@ -397,46 +423,46 @@
                         <div class="space-y-2 text-xs text-gray-600">
                             <div class="flex items-center gap-2">
                                 <i data-lucide="plus-circle" class="w-3.5 h-3.5 text-gray-400"></i>
-                                <span>Created: {{ $ticket->created_at->format('M d, Y H:i') }}</span>
+                                <span>Created: <?php echo e($ticket->created_at->format('M d, Y H:i')); ?></span>
                             </div>
                             <div class="flex items-center gap-2">
                                 <i data-lucide="alert-circle" class="w-3.5 h-3.5 text-gray-400"></i>
-                                <span>Due Date: {{ $ticket->due_date ? $ticket->due_date->format('M d, Y H:i') : 'N/A' }}</span>
+                                <span>Due Date: <?php echo e($ticket->due_date ? $ticket->due_date->format('M d, Y H:i') : 'N/A'); ?></span>
                             </div>
                         </div>
                     </div>
 
                     <!-- Attachments Panel -->
-                    @if($ticket->attachments && $ticket->attachments->count() > 0)
+                    <?php if($ticket->attachments && $ticket->attachments->count() > 0): ?>
                     <div class="animate-detail-reveal interactive-card bg-white border border-gray-200 rounded-xl p-5 shadow-sm space-y-3" style="--panel-index: 6;">
                         <h4 class="font-bold text-gray-900 text-sm flex items-center gap-2">
-                            <i data-lucide="paperclip" class="w-4 h-4 text-gray-500"></i> Attachments ({{ $ticket->attachments->count() }})
+                            <i data-lucide="paperclip" class="w-4 h-4 text-gray-500"></i> Attachments (<?php echo e($ticket->attachments->count()); ?>)
                         </h4>
                         <div class="space-y-2">
-                            @foreach($ticket->attachments as $file)
-                            <a href="{{ asset('storage/' . $file->path) }}" target="_blank" class="flex items-center justify-between border border-gray-100 rounded-lg p-2.5 bg-gray-50/50 hover:bg-gray-100/70 transition-colors group">
+                            <?php $__currentLoopData = $ticket->attachments; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $file): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <a href="<?php echo e(asset('storage/' . $file->path)); ?>" target="_blank" class="flex items-center justify-between border border-gray-100 rounded-lg p-2.5 bg-gray-50/50 hover:bg-gray-100/70 transition-colors group">
                                 <div class="flex items-center gap-2 text-xs min-w-0">
                                     <div class="w-8 h-8 bg-white border border-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 text-blue-500 shadow-sm">
                                         <i data-lucide="file" class="w-4 h-4"></i>
                                     </div>
                                     <div class="min-w-0">
-                                        <p class="font-medium text-gray-800 truncate">{{ $file->filename }}</p>
+                                        <p class="font-medium text-gray-800 truncate"><?php echo e($file->filename); ?></p>
                                     </div>
                                 </div>
                                 <i data-lucide="external-link" class="w-4 h-4 text-gray-400 group-hover:text-gray-700 flex-shrink-0 ml-2"></i>
                             </a>
-                            @endforeach
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </div>
                     </div>
-                    @endif
+                    <?php endif; ?>
 
                     <div class="animate-detail-reveal interactive-card bg-white border border-red-100 rounded-xl p-5 shadow-sm space-y-3" style="--panel-index: 7;">
                         <h4 class="font-bold text-red-600 text-sm flex items-center gap-2">
                             <i data-lucide="trash-2" class="w-4 h-4"></i> Danger Zone
                         </h4>
-                        <form action="{{ route('admin.support.tickets.destroy', $ticket) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this ticket?');">
-                            @csrf
-                            @method('DELETE')
+                        <form action="<?php echo e(route('admin.support.tickets.destroy', $ticket)); ?>" method="POST" onsubmit="return confirm('Are you sure you want to delete this ticket?');">
+                            <?php echo csrf_field(); ?>
+                            <?php echo method_field('DELETE'); ?>
                             <button type="submit" class="w-full text-center py-2 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg active:scale-[0.98] transition-all">
                                 Delete Ticket
                             </button>
@@ -456,4 +482,4 @@
         });
     </script>
 </body>
-</html>
+</html><?php /**PATH C:\laragon\www\CustomerService\CustomerService\resources\views/admin/show.blade.php ENDPATH**/ ?>

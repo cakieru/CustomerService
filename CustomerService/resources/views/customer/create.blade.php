@@ -12,7 +12,7 @@
     
     <div class="flex-grow space-y-6">
         <!-- ENCTYPE ADDED HERE -->
-        <form action="{{ route('tickets.store') }}" method="POST" enctype="multipart/form-data">
+        <form action="{{ route('customer.tickets.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
             
             <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm mb-6">

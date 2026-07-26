@@ -43,6 +43,8 @@ Route::prefix('admin')->group(function () {
     Route::patch('/tickets/{ticket}/close', [AdminController::class, 'close'])->name('admin.support.tickets.close');
     Route::delete('/tickets/{ticket}', [AdminController::class, 'destroy'])->name('admin.support.tickets.destroy');
     Route::get('/customers/{customer}', [AdminController::class, 'showCustomer'])->name('admin.customers.show');
+    Route::post('/tickets/{ticket}/notes', [AdminController::class, 'updateNotes'])->name('admin.support.tickets.notes');
+    Route::post('/tickets/{ticket}/priority', [AdminController::class, 'updatePriority'])->name('admin.support.tickets.priority');
 
     Route::get('/reports', function () {
         return redirect()->route('sla-reports.index');
@@ -107,3 +109,5 @@ Route::get('/terms', function () {
 })->name('terms');
 
 Route::get('/tickets/{ticket}', [CustomerController::class, 'show'])->name('customer.tickets.show');
+
+Route::post('/tickets/{ticket}/priority', [AdminController::class, 'updatePriority'])->name('admin.support.tickets.priority');

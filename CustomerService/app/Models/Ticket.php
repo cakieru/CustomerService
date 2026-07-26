@@ -21,6 +21,7 @@ class Ticket extends Model
         'customer_name',
         'issue_description',
         'priority_level',
+        'admin_notes',
     ];
 
     protected $casts = [
