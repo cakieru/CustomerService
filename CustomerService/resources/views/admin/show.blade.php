@@ -292,13 +292,14 @@
                             <div>
                                 <label class="text-[11px] font-semibold uppercase tracking-wider text-gray-400 block mb-1">Assign to Agent</label>
                                 <div class="flex gap-2">
-                                    <select name="agent_id" class="w-full text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer">
-                                        <option value="">-- Unassigned --</option>
-                                        <option value="1" {{ $ticket->agent_id == 1 ? 'selected' : '' }}>Louise Lane Parin</option>
-                                        <option value="2" {{ $ticket->agent_id == 2 ? 'selected' : '' }}>Prinz Geon Amparo</option>
-                                        <option value="3" {{ $ticket->agent_id == 3 ? 'selected' : '' }}>John Jerard Baluyot</option>
-                                        <option value="4" {{ $ticket->agent_id == 4 ? 'selected' : '' }}>Emmanuel Aragon</option>
-                                    </select>
+                                <select name="agent_id" class="w-full text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer">
+    <option value="">-- Unassigned --</option>
+    @foreach(\App\Models\User::whereIn('name', ['Louise Lane Parin', 'Prinz Geon Amparo', 'John Jerard Baluyot', 'Emmanuel Aragon'])->get() as $agent)
+        <option value="{{ $agent->id }}" {{ $ticket->agent_id == $agent->id ? 'selected' : '' }}>
+            {{ $agent->name }}
+        </option>
+    @endforeach
+</select>
                                     <button type="submit" class="px-3 py-1.5 text-xs font-medium text-blue-600 border border-blue-200 hover:bg-blue-50 rounded-lg transition-colors">
                                         Save
                                     </button>

@@ -258,8 +258,18 @@ class AdminController extends Controller
     /**
  * Legacy method for web.php route compatibility
  */
-public function assignAgent(Request $request, Ticket $ticket)
+public function assignAgent(Request $request, $ticket)
 {
-    return $this->assign($request, $ticket);
+    $request->validate([
+        'agent_id' => 'nullable|exists:users,id'
+    ]);
+
+    $ticket = \App\Models\Ticket::findOrFail($ticket);
+    $ticket->update([
+        'agent_id' => $request->agent_id
+    ]);
+
+    return back()->with('success', 'Agent assigned successfully.');
 }
+
 }

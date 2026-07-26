@@ -65,4 +65,6 @@ class Ticket extends Model
         return $query->whereNotNull('priority_level')
                      ->orWhereNotNull('priority');
     }
+
+
 }
