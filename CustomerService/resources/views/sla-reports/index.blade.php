@@ -271,7 +271,7 @@
                             @endforelse
                         </div>
                         <div class="p-3 bg-gray-50 border-t border-gray-100 text-center">
-                            <a href="{{ route('admin.support.tickets.index') }}" class="w-full inline-flex items-center justify-center gap-2 py-2 border border-gray-200 rounded-lg text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 transition-all">
+                            <a href="{{ route('agent') }}" class="w-full inline-flex items-center justify-center gap-2 py-2 border border-gray-200 rounded-lg text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 transition-all">
                                 <i data-lucide="list" class="w-3.5 h-3.5"></i> View all notifications
                             </a>
                         </div>
@@ -563,7 +563,7 @@
                 <!-- Quick Links Row -->
                 <div class="bg-white border border-gray-200 rounded-xl p-4 sm:p-6 shadow-sm mt-6">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
-                        <a href="{{ route('admin.support.tickets.index') }}" class="dash-card-hover flex items-center space-x-4 p-4 border border-gray-100 hover:border-blue-200 hover:bg-blue-50/30 rounded-xl transition-all group">
+                        <a href="{{ route('agent') }}" class="dash-card-hover flex items-center space-x-4 p-4 border border-gray-100 hover:border-blue-200 hover:bg-blue-50/30 rounded-xl transition-all group">
                             <div class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 shrink-0 group-hover:bg-blue-100 transition-colors">
                                 <i data-lucide="ticket" class="w-6 h-6"></i>
                             </div>
