@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Session;
 
 class TicketController extends Controller
 {
@@ -57,65 +58,61 @@ class TicketController extends Controller
         return view('customer.customerTicket', compact('ticket', 'replies', 'agents'));
     }
 
-    /**
-     * Store a reply to a ticket
-     */
-    public function storeReply(Request $request, $ticket_id)
-    {
-        $request->validate([
-            'message' => 'required|string',
-        ]);
+public function storeReply(Request $request, $ticket_id)
+{
+    $request->validate([
+        'message' => 'required|string',
+    ]);
 
-        $sender = $request->input('sender_type', 'Customer');
+    $sender = $request->input('sender_type', 'Customer');
+    $userId = auth()->id() ?? session('customer_id') ?? 1;
 
-        DB::table('customer_conversations')->insert([
-            'ticket_id'          => $ticket_id,
-            'user_id'            => auth()->id(),
-            'sender'             => $sender,
-            'communication_type' => 'Chat',
-            'message'            => $request->input('message'),
-            'sent_at'            => now(),
-            'created_at'         => now(),
-        ]);
+    // 1. Save customer/agent reply to ticket_replies
+    \App\Models\TicketReply::create([
+        'ticket_id' => $ticket_id,
+        'user_id'   => $userId,
+        'body'      => $request->input('message'),
+    ]);
 
-        // Update ticket status if customer replies
-        $ticket = Ticket::find($ticket_id);
-        if ($ticket && $sender === 'Customer' && in_array($ticket->status, ['resolved', 'closed'])) {
-            $ticket->update(['status' => 'open']);
-        }
+    $ticket = Ticket::find($ticket_id);
 
-        // Set first response time if this is the first admin reply
-        $replyCount = DB::table('customer_conversations')
-            ->where('ticket_id', $ticket_id)
-            ->where('sender', '!=', 'Customer')
-            ->where('sender', '!=', 'System')
-            ->count();
-
-        if ($replyCount === 1 && !$ticket->first_response_at) {
-            $ticket->update([
-                'first_response_at' => now(),
-                'response_time_minutes' => $ticket->created_at->diffInMinutes(now()),
-            ]);
-        }
-
-        // Send auto-reply for customer messages
-        if ($sender === 'Customer') {
-            DB::table('customer_conversations')->insert([
-                'ticket_id'          => $ticket_id,
-                'sender'             => 'System',
-                'communication_type' => 'Chat',
-                'message'            => "Thank you for reaching out! We have successfully received your reply for Ticket #{$ticket_id}. An agent will review it shortly.",
-                'sent_at'            => now()->addSecond(),
-                'created_at'         => now(),
-            ]);
-        }
-
-        // Update SLA metrics
-        SlaCalculator::updateSlaData();
-
-        return redirect()->back()->with('success', 'Reply sent successfully!');
+    // 2. Reopen ticket if customer replies while resolved/closed
+    if ($ticket && $sender === 'Customer' && in_array($ticket->status, ['resolved', 'closed'])) {
+        $ticket->update(['status' => 'open']);
     }
 
+    // 3. Set first response time if this is the first admin reply
+    $adminReplyCount = \App\Models\TicketReply::where('ticket_id', $ticket_id)
+        ->whereHas('user', function ($q) {
+            $q->where('role', 'admin');
+        })
+        ->count();
+
+    if ($adminReplyCount === 1 && !$ticket->first_response_at) {
+        $ticket->update([
+            'first_response_at'     => now(),
+            'response_time_minutes' => $ticket->created_at->diffInMinutes(now()),
+        ]);
+    }
+
+    // 4. Send auto-reply for customer messages
+    if ($sender === 'Customer') {
+        \App\Models\TicketReply::create([
+            'ticket_id' => $ticket_id,
+            'user_id'   => 1, // System user ID
+            'body'      => "Thank you for reaching out! We have successfully received your reply for Ticket #{$ticket_id}. An agent will review it shortly.",
+        ]);
+    }
+
+    // 5. Update SLA metrics
+    try {
+        SlaCalculator::updateSlaData();
+    } catch (\Exception $e) {
+        // SLA failed but reply was saved — don't crash the user experience
+    }
+
+    return redirect()->back()->with('success', 'Reply sent successfully!');
+}
     /**
      * Assign an agent to the ticket
      */
@@ -130,9 +127,8 @@ class TicketController extends Controller
         $ticket->save();
 
         $agentName = $request->agent_id 
-        $agent = DB::table('support_agents')->where('agent_id', $ticket->agent_id)->first();
-            : null;
-
+    ? DB::table('support_agents')->where('agent_id', $ticket->agent_id)->first()?->name 
+    : null;
         return redirect()
             ->route('admin.support.tickets.show', $id)
             ->with('success', $agentName 

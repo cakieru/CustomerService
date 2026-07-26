@@ -146,12 +146,12 @@
                     <!-- Reply Form -->
                     <div class="animate-reveal-card bg-white border border-gray-200 rounded-3xl p-6 shadow-sm space-y-4" style="--card-index: 3;">
                         <h3 class="text-lg font-bold text-gray-900">Add a reply</h3>
-                        <form action="{{ route('tickets.reply', $ticket->id) }}" method="POST" class="space-y-4">
+                        <form action="{{ route('customer.tickets.reply', $ticket->id) }}" method="POST" class="space-y-4">
                             @csrf
-                            <input type="hidden" name="sender_type" value="Customer">
+                            
                             <div>
                                 <textarea 
-                                    name="message" 
+                                    name="body"
                                     rows="4" 
                                     required
                                     placeholder="Add more details, ask a follow-up, or provide additional information..." 

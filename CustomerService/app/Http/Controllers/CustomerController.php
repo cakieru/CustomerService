@@ -147,7 +147,12 @@ class CustomerController extends Controller
         }
 
         // Update SLA metrics after creating ticket
-        SlaCalculator::updateSlaData();
+        // Update SLA metrics
+try {
+    SlaCalculator::updateSlaData();
+} catch (\Exception $e) {
+    // SLA failed but reply was saved
+}
 
         return redirect('/tickets')->with('success', 'Ticket created successfully!');
     }
@@ -224,65 +229,86 @@ class CustomerController extends Controller
      * SUBMIT TICKET REPLY (Customer)
      */
     public function reply(Request $request, Ticket $ticket)
-    {
-        $request->validate([
-            'body' => 'required|string',
-        ]);
+{
+    $request->validate([
+        'body' => 'required|string',
+    ]);
 
-        $customerId = Session::get('customer_id');
+    $customerId = Session::get('customer_id');
 
-        if ($customerId && $ticket->user_id != $customerId) {
-            abort(403, 'Unauthorized access to this ticket.');
-        }
-
-        TicketReply::create([
-            'ticket_id' => $ticket->id,
-            'user_id'   => $customerId ?? 1,
-            'body'      => $request->body,
-        ]);
-
-        // If the ticket was resolved/closed, reopen it when customer replies
-        if (in_array($ticket->status, ['resolved', 'closed'])) {
-            $ticket->update(['status' => 'open']);
-        }
-
-        // Update SLA metrics
-        SlaCalculator::updateSlaData();
-
-        return back()->with('success', 'Your reply has been sent.');
+    if ($customerId && $ticket->user_id != $customerId) {
+        abort(403, 'Unauthorized access to this ticket.');
     }
+
+    TicketReply::create([
+        'ticket_id' => $ticket->id,
+        'user_id'   => $customerId ?? 1,
+        'body'      => $request->body,
+    ]);
+
+    // If the ticket was resolved/closed, reopen it when customer replies
+    if (in_array($ticket->status, ['resolved', 'closed'])) {
+        $ticket->update(['status' => 'open']);
+    }
+
+    // Update SLA metrics
+        // Update SLA metrics
+        try {
+            SlaCalculator::updateSlaData();
+        } catch (\Exception $e) {
+            // SLA failed but reply was saved
+        }
+
+    return back()->with('success', 'Your reply has been sent.');
+}
 
     public function customerTicket($id)
-{
-    $ticket = Ticket::findOrFail($id);
-    
-    $customerId = Session::get('customer_id');
-    if ($customerId && $ticket->user_id != $customerId) {
-        abort(403);
+    {
+        $ticket = Ticket::findOrFail($id);
+        
+        $customerId = Session::get('customer_id');
+        if ($customerId && $ticket->user_id != $customerId) {
+            abort(403);
+        }
+
+        // Use ticket owner as fallback if session is missing
+        $customerId = $customerId ?? $ticket->user_id;
+
+        $replies = \DB::table('ticket_replies')
+            ->where('ticket_id', $ticket->id)
+            ->orderBy('created_at', 'asc')
+            ->get()
+            ->map(function($reply) use ($customerId) {
+                $user = User::find($reply->user_id);
+                
+                // Detect the automated system reply by its content
+                $isSystem = str_contains($reply->body, 'Thank you for reaching out! We have successfully received your reply');
+                
+                if ($isSystem) {
+                    return (object) [
+                        'sender'    => 'System',
+                        'user_name' => 'Support Assistant',
+                        'sent_at'   => $reply->created_at,
+                        'message'   => $reply->body,
+                    ];
+                }
+                
+                $isCustomer = $reply->user_id == $customerId;
+                
+                return (object) [
+                    'sender'    => $isCustomer ? 'Customer' : 'Agent',
+                    'user_name' => $isCustomer ? ($user?->name ?? 'You') : ($user?->name ?? 'Support Agent'),
+                    'sent_at'   => $reply->created_at,
+                    'message'   => $reply->body,
+                ];
+            });
+
+        $agent = $ticket->agent;
+
+        $attachments = \DB::table('ticket_attachments')
+            ->where('ticket_id', $ticket->id)
+            ->get();
+
+        return view('customer.customerTicket', compact('ticket', 'replies', 'agent', 'attachments'));
     }
-
-    $replies = \DB::table('ticket_replies')
-        ->where('ticket_id', $ticket->id)
-        ->orderBy('created_at', 'asc')
-        ->get()
-        ->map(function($reply) use ($customerId) {
-            $user = User::find($reply->user_id);
-            $isCustomer = $reply->user_id == $customerId;
-            return (object) [
-                'sender'    => $isCustomer ? 'Customer' : 'Agent',
-                'user_name' => $isCustomer ? ($user?->name ?? 'You') : ($user?->name ?? 'Support Agent'),
-                'sent_at'   => $reply->created_at,
-                'message'   => $reply->body,
-            ];
-        });
-
-    // This fetches the assigned agent via the relationship
-    $agent = $ticket->agent;
-
-    $attachments = \DB::table('ticket_attachments')
-        ->where('ticket_id', $ticket->id)
-        ->get();
-
-    return view('customer.customerTicket', compact('ticket', 'replies', 'agent', 'attachments'));
-}
 }
