@@ -251,4 +251,44 @@ class CustomerController extends Controller
 
         return back()->with('success', 'Your reply has been sent.');
     }
+
+    public function customerTicket($id)
+    {
+        $ticket = Ticket::findOrFail($id);
+        
+        $customerId = Session::get('customer_id');
+        if ($customerId && $ticket->user_id != $customerId) {
+            abort(403, 'Unauthorized access to this ticket.');
+        }
+
+        // Format replies the way customerTicket.blade expects
+        $replies = \DB::table('ticket_replies')
+            ->where('ticket_id', $ticket->id)
+            ->orderBy('created_at', 'asc')
+            ->get()
+            ->map(function($reply) use ($customerId) {
+                $user = User::find($reply->user_id);
+                $isCustomer = $reply->user_id == $customerId;
+                
+                return (object) [
+                    'sender'    => $isCustomer ? 'Customer' : 'Agent',
+                    'user_name' => $isCustomer ? ($user ? $user->name : 'You') : ($user ? $user->name : 'Support Agent'),
+                    'sent_at'   => $reply->created_at,
+                    'message'   => $reply->body,
+                ];
+            });
+
+        // Get assigned agent
+        $agent = null;
+        if ($ticket->agent_id) {
+            $agent = User::find($ticket->agent_id);
+        }
+
+        // Get attachments
+        $attachments = \DB::table('ticket_attachments')
+            ->where('ticket_id', $ticket->id)
+            ->get();
+
+        return view('customer.customerTicket', compact('ticket', 'replies', 'agent', 'attachments'));
+    }
 }

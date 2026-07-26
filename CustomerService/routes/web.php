@@ -36,11 +36,14 @@ Route::prefix('admin')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'index'])->name('admin.support.dashboard');
     Route::get('/tickets', [AdminController::class, 'tickets'])->name('admin.support.tickets.index');
     Route::get('/tickets/{ticket}', [AdminController::class, 'show'])->name('admin.support.tickets.show');
-    Route::post('/tickets/{ticket}/status', [AdminController::class, 'updateStatus'])->name('admin.tickets.status');
-    Route::post('/tickets/{ticket}/assign', [AdminController::class, 'assignAgent'])->name('admin.tickets.assign');
-    Route::post('/tickets/{ticket}/reply', [AdminController::class, 'reply'])->name('admin.tickets.reply');
+    Route::post('/tickets/{ticket}/status', [AdminController::class, 'updateStatus'])->name('admin.support.tickets.status');
+    Route::post('/tickets/{ticket}/assign', [AdminController::class, 'assignAgent'])->name('admin.support.tickets.assign');
+    Route::post('/tickets/{ticket}/reply', [AdminController::class, 'reply'])->name('admin.support.tickets.reply');
+    Route::patch('/tickets/{ticket}/resolve', [AdminController::class, 'resolve'])->name('admin.support.tickets.resolve');
+    Route::patch('/tickets/{ticket}/close', [AdminController::class, 'close'])->name('admin.support.tickets.close');
+    Route::delete('/tickets/{ticket}', [AdminController::class, 'destroy'])->name('admin.support.tickets.destroy');
+    Route::get('/customers/{customer}', [AdminController::class, 'showCustomer'])->name('admin.customers.show');
 
-    // Admin reports now redirects to full SLA reports page
     Route::get('/reports', function () {
         return redirect()->route('sla-reports.index');
     })->name('admin.support.reports');
@@ -59,14 +62,13 @@ Route::prefix('customer')->group(function () {
     Route::get('/tickets', [CustomerController::class, 'index'])->name('customer.tickets');
     Route::get('/tickets/create', [CustomerController::class, 'create'])->name('customer.create');
     Route::post('/tickets', [CustomerController::class, 'store'])->name('customer.tickets.store');
-    Route::get('/tickets/{ticket}', [CustomerController::class, 'show'])->name('customer.tickets.show');
+    Route::get('/tickets/{ticket}', [CustomerController::class, 'customerTicket'])->name('customer.tickets.show');
     Route::post('/tickets/{ticket}/reply', [CustomerController::class, 'reply'])->name('customer.tickets.reply');
 });
 
-
 /*
 |--------------------------------------------------------------------------
-| Legacy Ticket Routes (for customer conversation system)
+| Legacy Ticket Routes (customer conversation detail view)
 |--------------------------------------------------------------------------
 */
 Route::get('/tickets/{id}', [TicketController::class, 'show'])->name('tickets.show');
@@ -89,11 +91,6 @@ Route::post('/knowledge-base/{id}/view', [KnowledgeBaseController::class, 'incre
 | Agent Routes
 |--------------------------------------------------------------------------
 */
-Route::get('/agent', function () {
-    return view('admin.agent');
-})->name('agent');
-
-// Agent Portal - Dashboard List View
 Route::get('/agent', [AdminController::class, 'agentTickets'])->name('agent');
 
 Route::get('/agent/ticket/details', function () {
@@ -109,32 +106,4 @@ Route::get('/terms', function () {
     return view('terms');
 })->name('terms');
 
-Route::post('/admin/tickets/{ticket}/reply', [AdminController::class, 'reply'])->name('admin.support.tickets.reply');
-Route::post('/admin/tickets/{ticket}/assign', [AdminController::class, 'assign'])->name('admin.support.tickets.assign');
-Route::patch('/admin/tickets/{ticket}/resolve', [AdminController::class, 'resolve'])->name('admin.support.tickets.resolve');
-Route::patch('/admin/tickets/{ticket}/close', [AdminController::class, 'close'])->name('admin.support.tickets.close');
-Route::delete('/admin/tickets/{ticket}', [AdminController::class, 'destroy'])->name('admin.support.tickets.destroy');
-Route::get('/admin/customers/{customer}', [AdminController::class, 'showCustomer'])->name('admin.customers.show');
-
-/*
-|--------------------------------------------------------------------------
-| Admin Routes
-|--------------------------------------------------------------------------
-*/
-Route::prefix('admin')->group(function () {
-    Route::get('/dashboard', [AdminController::class, 'index'])->name('admin.support.dashboard');
-    Route::get('/tickets', [AdminController::class, 'tickets'])->name('admin.support.tickets.index');
-    Route::get('/tickets/{ticket}', [AdminController::class, 'show'])->name('admin.support.tickets.show');
-    Route::post('/tickets/{ticket}/status', [AdminController::class, 'updateStatus'])->name('admin.tickets.status');
-    Route::post('/tickets/{ticket}/assign', [AdminController::class, 'assign'])->name('admin.support.tickets.assign');
-    Route::post('/tickets/{ticket}/reply', [AdminController::class, 'reply'])->name('admin.support.tickets.reply');
-    Route::patch('/tickets/{ticket}/resolve', [AdminController::class, 'resolve'])->name('admin.support.tickets.resolve');
-    Route::patch('/tickets/{ticket}/close', [AdminController::class, 'close'])->name('admin.support.tickets.close');
-    Route::delete('/tickets/{ticket}', [AdminController::class, 'destroy'])->name('admin.support.tickets.destroy');
-    Route::get('/customers/{customer}', [AdminController::class, 'showCustomer'])->name('admin.customers.show');
-    
-    // Admin reports now redirects to full SLA reports page
-    Route::get('/reports', function () {
-        return redirect()->route('sla-reports.index');
-    })->name('admin.support.reports');
-});
+Route::get('/tickets/{ticket}', [CustomerController::class, 'show'])->name('customer.tickets.show');

@@ -161,7 +161,7 @@
 
                     <!-- The x-show handler filters rows based on your active category tab selection -->
                     <a x-show="activeTab === 'all' || activeTab === '{{ $alpineStatus }}'" 
-                       href="{{ url('/tickets/' . $ticket->id) }}" 
+                    href="{{ route('customer.tickets.show', $ticket->id) }}" 
                        class="block bg-white border border-gray-200 rounded-2xl p-4 shadow-sm hover:border-gray-300 transition flex items-center justify-between group">
                         <div class="flex items-center space-x-4">
                             <div class="w-10 h-10 bg-gray-100 text-gray-500 rounded-xl flex items-center justify-center flex-shrink-0">

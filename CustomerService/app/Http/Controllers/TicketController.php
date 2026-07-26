@@ -130,7 +130,7 @@ class TicketController extends Controller
         $ticket->save();
 
         $agentName = $request->agent_id 
-            ? DB::table('support_agents')->where('id', $request->agent_id)->value('name')
+        $agent = DB::table('support_agents')->where('agent_id', $ticket->agent_id)->first();
             : null;
 
         return redirect()

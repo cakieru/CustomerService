@@ -317,7 +317,7 @@
                         $response = $metrics['avg_response_time'] ?? null;
                         $resolution = $metrics['avg_resolution_time'] ?? null;
                         $totalTickets = \App\Models\Ticket::count();
-                        $resolvedTickets = \App\Models\Ticket::whereNotNull('resolved_at')->count();
+                        $resolvedTickets = \App\Models\Ticket::where('status', 'resolved')->count();
                         $openTickets = \App\Models\Ticket::where('status', 'open')->count();
                         $overdueTickets = \App\Models\Ticket::where('status', '!=', 'closed')
                             ->where('status', '!=', 'resolved')
