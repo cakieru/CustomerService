@@ -19,6 +19,7 @@
         }
     </script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
     <style>
         body, * {
@@ -35,8 +36,8 @@
         }
         .dash-card-hover {
             will-change: transform, opacity;
-            transition: background-color 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
-                        transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
+            transition: background-color 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+                        transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
                         box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .dash-card-hover:hover {
@@ -92,6 +93,10 @@
         }
         .chart-point:hover {
             r: 6;
+            stroke-width: 3;
+        }
+        .chart-point.current-week {
+            stroke: #2563eb;
             stroke-width: 3;
         }
         @keyframes lineDraw {
@@ -164,6 +169,42 @@
             opacity: 1;
         }
         .toast.success { background: #10b981; }
+        .toast.error { background: #ef4444; }
+
+        /* Filter tabs */
+        .filter-tab {
+            padding: 6px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #6b7280;
+            background: transparent;
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+        .filter-tab:hover {
+            background: #f3f4f6;
+            color: #374151;
+        }
+        .filter-tab.active {
+            background: #eff6ff;
+            color: #2563eb;
+            border-color: #bfdbfe;
+        }
+
+        /* Current week highlight */
+        .current-week-badge {
+            background: #dbeafe;
+            color: #1d4ed8;
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            font-weight: 600;
+        }
 
         * {
             scrollbar-width: auto;
@@ -187,7 +228,7 @@
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans antialiased min-h-screen flex overflow-hidden">
 
-    <!-- Responsive Collapsible Sidebar (matches agent/dashboard/KnowledgeBase blades) -->
+    <!-- Responsive Collapsible Sidebar -->
     <aside class="w-16 sm:w-20 md:w-64 bg-white border-r border-gray-200 flex flex-col justify-between fixed h-full z-30 transition-all duration-300">
         <div>
             <div class="p-4 md:p-6 border-b border-gray-100 flex items-center justify-center md:justify-start gap-3">
@@ -297,32 +338,72 @@
                     </div>
                 @endif
 
-                <!-- Page Header with Export -->
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div>
-                        <h2 class="text-2xl sm:text-3xl font-bold text-gray-950 tracking-tight">SLA REPORTS</h2>
-                        <p class="text-sm text-gray-500 mt-1">Track and monitor service level agreement performance across all tickets</p>
-                    </div>
-                    <div class="relative self-start sm:self-auto">
-                        <button id="exportBtn" class="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all">
-                            <i data-lucide="download" class="w-4 h-4"></i>
-                            Export
-                            <i data-lucide="chevron-down" class="w-3 h-3"></i>
-                        </button>
-                        <div id="exportDropdown" class="export-dropdown">
-                            <a href="{{ route('sla-reports.export', ['format' => 'csv']) }}" onclick="showToast('Exporting CSV...', 'success')">
-                                <i data-lucide="file-spreadsheet" class="w-4 h-4 text-green-600"></i>
-                                Export as CSV
-                            </a>
-                            <a href="{{ route('sla-reports.export', ['format' => 'json']) }}" onclick="showToast('Exporting JSON...', 'success')">
-                                <i data-lucide="file-json" class="w-4 h-4 text-blue-600"></i>
-                                Export as JSON
-                            </a>
-                            <a href="#" onclick="showToast('Print preview opened', 'success'); window.print(); return false;">
-                                <i data-lucide="printer" class="w-4 h-4 text-gray-600"></i>
-                                Print Report
-                            </a>
+                <!-- Page Header with Filter, Export, and Send -->
+                <div class="flex flex-col gap-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div>
+                            <h2 class="text-2xl sm:text-3xl font-bold text-gray-950 tracking-tight">SLA REPORTS</h2>
+                            <p class="text-sm text-gray-500 mt-1">Track and monitor service level agreement performance across all tickets</p>
                         </div>
+                        <div class="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+                            <!-- Send to Departments Button -->
+                            <button id="sendReportBtn" onclick="sendSlaReport()" class="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-all shadow-sm">
+                                <i data-lucide="send" class="w-4 h-4"></i>
+                                <span>Send to Sales & CS</span>
+                            </button>
+
+                            <!-- Export Dropdown -->
+                            <div class="relative">
+                                <button id="exportBtn" class="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all">
+                                    <i data-lucide="download" class="w-4 h-4"></i>
+                                    Export
+                                    <i data-lucide="chevron-down" class="w-3 h-3"></i>
+                                </button>
+                                <div id="exportDropdown" class="export-dropdown">
+                                    <a href="{{ route('sla-reports.export', ['format' => 'csv']) }}" onclick="showToast('Exporting CSV...', 'success')">
+                                        <i data-lucide="file-spreadsheet" class="w-4 h-4 text-green-600"></i>
+                                        Export as CSV
+                                    </a>
+                                    <a href="{{ route('sla-reports.export', ['format' => 'json']) }}" onclick="showToast('Exporting JSON...', 'success')">
+                                        <i data-lucide="file-json" class="w-4 h-4 text-blue-600"></i>
+                                        Export as JSON
+                                    </a>
+                                    <a href="#" onclick="showToast('Print preview opened', 'success'); window.print(); return false;">
+                                        <i data-lucide="printer" class="w-4 h-4 text-gray-600"></i>
+                                        Print Report
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filter Tabs -->
+                    <div class="flex items-center gap-1 bg-gray-100/50 p-1 rounded-xl w-fit">
+                        <a href="{{ route('sla-reports.index', ['filter' => 'week']) }}" class="filter-tab {{ $filter === 'week' ? 'active' : '' }}">
+                            <i data-lucide="calendar-days" class="w-3.5 h-3.5 inline mr-1"></i> Week
+                        </a>
+                        <a href="{{ route('sla-reports.index', ['filter' => 'month']) }}" class="filter-tab {{ $filter === 'month' ? 'active' : '' }}">
+                            <i data-lucide="calendar" class="w-3.5 h-3.5 inline mr-1"></i> Month
+                        </a>
+                        <a href="{{ route('sla-reports.index', ['filter' => 'year']) }}" class="filter-tab {{ $filter === 'year' ? 'active' : '' }}">
+                            <i data-lucide="calendar-range" class="w-3.5 h-3.5 inline mr-1"></i> Year
+                        </a>
+                        <a href="{{ route('sla-reports.index', ['filter' => 'all']) }}" class="filter-tab {{ $filter === 'all' ? 'active' : '' }}">
+                            <i data-lucide="infinity" class="w-3.5 h-3.5 inline mr-1"></i> All Time
+                        </a>
+                    </div>
+
+                    <!-- Filter Info Badge -->
+                    <div class="flex items-center gap-2 text-xs text-gray-500">
+                        <i data-lucide="filter" class="w-3.5 h-3.5"></i>
+                        <span>Showing data for <strong class="text-gray-700">{{ $filterLabel }}</strong></span>
+                        @if(isset($startDate) && isset($endDate))
+                            <span class="text-gray-400">({{ $startDate->format('M d, Y') }} - {{ $endDate->format('M d, Y') }})</span>
+                        @endif
+                        <span class="ml-2 px-2 py-0.5 bg-blue-50 text-blue-700 rounded-full font-medium">{{ $filteredTotal }} tickets</span>
+                        @if($filteredResolved > 0)
+                            <span class="px-2 py-0.5 bg-green-50 text-green-700 rounded-full font-medium">{{ $filteredResolved }} resolved</span>
+                        @endif
                     </div>
                 </div>
 
@@ -347,7 +428,7 @@
                         $response = $metrics['avg_response_time'] ?? null;
                         $resolution = $metrics['avg_resolution_time'] ?? null;
                         $totalTickets = \App\Models\Ticket::count();
-                        $resolvedTickets = \App\Models\Ticket::where('status', 'resolved')->count();
+                        $resolvedTickets = \App\Models\Ticket::whereNotNull('resolved_at')->count();
                         $openTickets = \App\Models\Ticket::where('status', 'open')->count();
                         $overdueTickets = \App\Models\Ticket::where('status', '!=', 'closed')
                             ->where('status', '!=', 'resolved')
@@ -358,7 +439,7 @@
                     <div class="dash-card-hover bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium text-gray-500">Overall Compliance</p>
-                            <h3 class="text-3xl sm:text-4xl font-bold text-gray-900 mt-1">{{ $compliance->metric_value ?? '0' }}%</h3>
+                            <h3 class="text-3xl sm:text-4xl font-bold text-gray-900 mt-1">{{ $compliance ? (float)$compliance->metric_value : 0 }}%</h3>
                             <p class="text-xs text-gray-400 mt-1">{{ $resolvedTickets }} resolved / {{ $totalTickets }} total</p>
                         </div>
                         <div class="h-12 w-12 bg-green-50 rounded-lg flex items-center justify-center text-green-500 flex-shrink-0">
@@ -402,11 +483,23 @@
 
                 <!-- Charts Row -->
                 <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
-                    <!-- Weekly SLA Compliance Trend -->
+                    <!-- Trend Chart -->
                     <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-4 sm:p-6 relative">
-                        <h3 class="text-lg font-bold text-gray-900 mb-4">Weekly SLA Compliance Trend</h3>
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-bold text-gray-900">
+                                @if($filter === 'month')
+                                    Monthly SLA Compliance Trend
+                                @elseif($filter === 'year')
+                                    Yearly SLA Compliance Trend
+                                @else
+                                    Weekly SLA Compliance Trend
+                                @endif
+                            </h3>
+                            <span class="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded-lg">{{ $filterLabel }}</span>
+                        </div>
                         <div class="relative h-48" id="trendChartContainer">
                             <svg viewBox="0 0 600 180" class="w-full h-full" id="trendChart">
+                                <!-- Grid lines -->
                                 <line x1="50" y1="20" x2="550" y2="20" stroke="#e5e7eb" stroke-width="1"/>
                                 <line x1="50" y1="60" x2="550" y2="60" stroke="#e5e7eb" stroke-width="1"/>
                                 <line x1="50" y1="100" x2="550" y2="100" stroke="#e5e7eb" stroke-width="1"/>
@@ -417,48 +510,63 @@
                                 <text x="35" y="145" text-anchor="end" font-size="10" fill="#9ca3af">25</text>
                                 <text x="35" y="165" text-anchor="end" font-size="10" fill="#9ca3af">0</text>
 
-                                @foreach($weeklyCompliance as $index => $week)
-                                <text x="{{ 100 + ($index * 110) }}" y="175" text-anchor="middle" font-size="10" fill="#9ca3af">{{ $week->week_name }}</text>
+                                @php
+                                    $trendCount = count($trendData);
+                                    $trendSpacing = $trendCount > 1 ? 500 / ($trendCount - 1) : 500;
+                                @endphp
+
+                                @foreach($trendData as $index => $period)
+                                <text x="{{ 50 + ($index * $trendSpacing) }}" y="175" text-anchor="middle" font-size="10" fill="#9ca3af">
+                                    {{ $period['period_name'] ?? $period['week_name'] }}
+                                </text>
                                 @endforeach
 
                                 @php
                                     $compPoints = [];
                                     $tktPoints = [];
-                                    $maxTickets = max($weeklyCompliance->pluck('ticket_count')->max(), 1);
-                                    foreach($weeklyCompliance as $index => $week) {
-                                        $x = 100 + ($index * 110);
-                                        $compY = 140 - (($week->compliance_percentage / 100) * 120);
-                                        $tktY = 140 - (($week->ticket_count / max($maxTickets, 1)) * 120);
+                                    $maxTickets = max(collect($trendData)->pluck('ticket_count')->max(), 1);
+                                    foreach($trendData as $index => $period) {
+                                        $x = 50 + ($index * $trendSpacing);
+                                        $compY = 140 - (($period['compliance_percentage'] / 100) * 120);
+                                        $tktY = 140 - (($period['ticket_count'] / max($maxTickets, 1)) * 120);
                                         $compPoints[] = "$x,$compY";
                                         $tktPoints[] = "$x,$tktY";
                                     }
                                 @endphp
 
+                                <!-- Compliance line -->
+                                @if(count($compPoints) > 1)
                                 <polyline class="trend-line" points="{{ implode(' ', $compPoints) }}" fill="none" stroke="#3b82f6" stroke-width="2"/>
-                                @foreach($weeklyCompliance as $index => $week)
+                                @endif
+                                @foreach($trendData as $index => $period)
                                 @php
-                                    $x = 100 + ($index * 110);
-                                    $compY = 140 - (($week->compliance_percentage / 100) * 120);
+                                    $x = 50 + ($index * $trendSpacing);
+                                    $compY = 140 - (($period['compliance_percentage'] / 100) * 120);
+                                    $isCurrent = $period['is_current_week'] ?? false;
                                 @endphp
-                                <circle class="chart-point" cx="{{ $x }}" cy="{{ $compY }}" r="4" fill="white" stroke="#3b82f6" stroke-width="2"
-                                    data-week="{{ $week->week_name }}" data-compliance="{{ $week->compliance_percentage }}" data-ticket="{{ $week->ticket_count }}" style="animation-delay: {{ 0.8 + ($index * 0.1) }}s"/>
+                                <circle class="chart-point {{ $isCurrent ? 'current-week' : '' }}" cx="{{ $x }}" cy="{{ $compY }}" r="4" fill="white" stroke="#3b82f6" stroke-width="2"
+                                    data-period="{{ $period['period_name'] ?? $period['week_name'] }}" data-compliance="{{ $period['compliance_percentage'] }}" data-ticket="{{ $period['ticket_count'] }}" style="animation-delay: {{ 0.8 + ($index * 0.1) }}s"/>
                                 @endforeach
 
+                                <!-- Ticket count line -->
+                                @if(count($tktPoints) > 1)
                                 <polyline class="trend-line" points="{{ implode(' ', $tktPoints) }}" fill="none" stroke="#a855f7" stroke-width="2" style="animation-delay: 0.3s"/>
-                                @foreach($weeklyCompliance as $index => $week)
+                                @endif
+                                @foreach($trendData as $index => $period)
                                 @php
-                                    $x = 100 + ($index * 110);
-                                    $tktY = 140 - (($week->ticket_count / max($maxTickets, 1)) * 120);
+                                    $x = 50 + ($index * $trendSpacing);
+                                    $tktY = 140 - (($period['ticket_count'] / max($maxTickets, 1)) * 120);
+                                    $isCurrent = $period['is_current_week'] ?? false;
                                 @endphp
-                                <circle class="chart-point" cx="{{ $x }}" cy="{{ $tktY }}" r="4" fill="white" stroke="#a855f7" stroke-width="2"
-                                    data-week="{{ $week->week_name }}" data-compliance="{{ $week->compliance_percentage }}" data-ticket="{{ $week->ticket_count }}" style="animation-delay: {{ 0.8 + ($index * 0.1) }}s"/>
+                                <circle class="chart-point {{ $isCurrent ? 'current-week' : '' }}" cx="{{ $x }}" cy="{{ $tktY }}" r="4" fill="white" stroke="#a855f7" stroke-width="2"
+                                    data-period="{{ $period['period_name'] ?? $period['week_name'] }}" data-compliance="{{ $period['compliance_percentage'] }}" data-ticket="{{ $period['ticket_count'] }}" style="animation-delay: {{ 0.8 + ($index * 0.1) }}s"/>
                                 @endforeach
                             </svg>
                             <div id="trendTooltip" class="chart-tooltip">
                                 <div class="tooltip-content">
-                                    <p class="font-semibold text-gray-900 text-sm mb-1" id="trendTooltipWeek">Week 1</p>
+                                    <p class="font-semibold text-gray-900 text-sm mb-1" id="trendTooltipPeriod">Period</p>
                                     <p class="text-xs text-blue-600">Compliance % : <span id="trendTooltipCompliance">0</span></p>
-                                    <p class="text-xs text-purple-600">Ticket : <span id="trendTooltipTicket">0</span></p>
+                                    <p class="text-xs text-purple-600">Tickets : <span id="trendTooltipTicket">0</span></p>
                                 </div>
                             </div>
                         </div>
@@ -489,14 +597,22 @@
                                 <text x="35" y="115" text-anchor="end" font-size="10" fill="#9ca3af">25</text>
                                 <text x="35" y="135" text-anchor="end" font-size="10" fill="#9ca3af">0</text>
 
+                                @php
+                                    $priorityCount = $priorityPerformance->count();
+                                    $prioritySpacing = $priorityCount > 1 ? 500 / ($priorityCount - 1) : 500;
+                                @endphp
+
                                 @foreach($priorityPerformance as $index => $priority)
                                 @php
-                                    $x = 90 + ($index * 120);
+                                    $x = $priorityCount > 1 ? 50 + ($index * $prioritySpacing) - 30 : 260;
                                     $barColors = ['critical' => '#ef4444', 'high' => '#f97316', 'medium' => '#eab308', 'low' => '#22c55e'];
                                     $color = $barColors[strtolower($priority->priority_level)] ?? '#3b82f6';
+                                    $compliance = (float) $priority->compliance_percentage;
+                                    // Show a minimum visible bar even at 0% for visual feedback
+                                    $displayCompliance = max($compliance, 3);
                                 @endphp
                                 <rect class="priority-bar" id="bar-{{ strtolower($priority->priority_level) }}" x="{{ $x }}" y="130" width="60" height="0" fill="{{ $color }}" rx="2"
-                                    data-priority="{{ $priority->priority_level }}" data-compliance="{{ $priority->compliance_percentage }}"/>
+                                    data-priority="{{ $priority->priority_level }}" data-compliance="{{ $compliance }}"/>
                                 <text x="{{ $x + 30 }}" y="145" text-anchor="middle" font-size="10" fill="#9ca3af">{{ $priority->priority_level }}</text>
                                 @endforeach
                             </svg>
@@ -542,7 +658,7 @@
                                         <div class="flex items-center gap-2">
                                             <span class="text-sm font-medium text-gray-900">{{ $target->compliance_percentage }}%</span>
                                             <div class="w-24 bg-gray-200 rounded-full h-2">
-                                                <div class="{{ $target->progress_color }} h-2 rounded-full transition-all duration-500" style="width: {{ $target->compliance_percentage }}%"></div>
+                                                <div class="{{ $target->progress_color }} h-2 rounded-full transition-all duration-500" style="width: {{ max($target->compliance_percentage, 2) }}%"></div>
                                             </div>
                                         </div>
                                     </td>
@@ -600,8 +716,6 @@
 
     <!-- Toast Notification -->
     <div id="toast" class="toast"></div>
-</body>
-</html>
 
     <script>
         // Lucide Icons
@@ -628,13 +742,15 @@
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
 
-        // Bar Animation
+        // Bar Animation - FIXED: always show a minimum height bar even at 0%
         function animateBar(barId, targetPercent, duration = 800, delay = 0) {
             const bar = document.getElementById(barId);
             if (!bar) return;
             const zeroY = 130;
             const maxHeight = 110;
-            const targetHeight = (targetPercent / 100) * maxHeight;
+            // Show minimum 4px height for visibility even at 0%
+            const displayPercent = Math.max(targetPercent, 3);
+            const targetHeight = (displayPercent / 100) * maxHeight;
             const targetY = zeroY - targetHeight;
             setTimeout(() => {
                 const startTime = performance.now();
@@ -654,30 +770,32 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             @foreach($priorityPerformance as $index => $priority)
-            animateBar('bar-{{ strtolower($priority->priority_level) }}', {{ $priority->compliance_percentage }}, 800, {{ 200 + ($index * 200) }});
+            animateBar('bar-{{ strtolower($priority->priority_level) }}', {{ (float) $priority->compliance_percentage }}, 800, {{ 200 + ($index * 200) }});
             @endforeach
         });
 
         // Trend Chart Tooltips
         const trendTooltip = document.getElementById('trendTooltip');
         const trendPoints = document.querySelectorAll('#trendChart .chart-point');
-        const weekData = {
-            @foreach($weeklyCompliance as $week)
-            '{{ $week->week_name }}': { compliance: {{ $week->compliance_percentage }}, ticket: {{ $week->ticket_count }} },
+        const periodData = {
+            @foreach($trendData as $period)
+            '{{ $period['period_name'] ?? $period['week_name'] }}': { compliance: {{ $period['compliance_percentage'] }}, ticket: {{ $period['ticket_count'] }} },
             @endforeach
         };
         trendPoints.forEach(point => {
             point.addEventListener('mouseenter', () => {
-                const week = point.getAttribute('data-week');
-                const data = weekData[week];
-                document.getElementById('trendTooltipWeek').textContent = week;
-                document.getElementById('trendTooltipCompliance').textContent = data.compliance;
-                document.getElementById('trendTooltipTicket').textContent = data.ticket;
-                const rect = point.getBoundingClientRect();
-                const containerRect = document.getElementById('trendChartContainer').getBoundingClientRect();
-                trendTooltip.style.left = (rect.left - containerRect.left + rect.width/2 - 70) + 'px';
-                trendTooltip.style.top = (rect.top - containerRect.top - 90) + 'px';
-                trendTooltip.classList.add('visible');
+                const period = point.getAttribute('data-period');
+                const data = periodData[period];
+                if (data) {
+                    document.getElementById('trendTooltipPeriod').textContent = period;
+                    document.getElementById('trendTooltipCompliance').textContent = data.compliance;
+                    document.getElementById('trendTooltipTicket').textContent = data.ticket;
+                    const rect = point.getBoundingClientRect();
+                    const containerRect = document.getElementById('trendChartContainer').getBoundingClientRect();
+                    trendTooltip.style.left = (rect.left - containerRect.left + rect.width/2 - 70) + 'px';
+                    trendTooltip.style.top = (rect.top - containerRect.top - 90) + 'px';
+                    trendTooltip.classList.add('visible');
+                }
             });
             point.addEventListener('mouseleave', () => trendTooltip.classList.remove('visible'));
         });
@@ -687,14 +805,14 @@
         const priorityBars = document.querySelectorAll('#priorityChart .priority-bar');
         const priorityData = {
             @foreach($priorityPerformance as $priority)
-            '{{ $priority->priority_level }}': {{ $priority->compliance_percentage }},
+            '{{ $priority->priority_level }}': {{ (float) $priority->compliance_percentage }},
             @endforeach
         };
         priorityBars.forEach(bar => {
             bar.addEventListener('mouseenter', () => {
                 const priority = bar.getAttribute('data-priority');
                 document.getElementById('priorityTooltipLabel').textContent = priority;
-                document.getElementById('priorityTooltipValue').textContent = priorityData[priority];
+                document.getElementById('priorityTooltipValue').textContent = priorityData[priority] ?? 0;
                 const rect = bar.getBoundingClientRect();
                 const containerRect = document.getElementById('priorityChartContainer').getBoundingClientRect();
                 priorityTooltip.style.left = (rect.left - containerRect.left + rect.width/2 - 70) + 'px';
@@ -724,6 +842,42 @@
                 priorityBars.forEach(bar => bar.style.filter = 'brightness(1)');
             });
         });
+
+        // Send SLA Report to Sales & CS
+        function sendSlaReport() {
+            const btn = document.getElementById('sendReportBtn');
+            const originalHtml = btn.innerHTML;
+
+            // Loading state
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Sending...';
+            btn.disabled = true;
+            lucide.createIcons();
+
+            fetch("{{ route('sla-reports.send') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({})
+            })
+            .then(res => res.json())
+            .then(data => {
+                showToast(data.message, 'success');
+                setTimeout(() => {
+                    btn.innerHTML = originalHtml;
+                    btn.disabled = false;
+                    lucide.createIcons();
+                }, 2000);
+            })
+            .catch(err => {
+                showToast('Failed to send report. Please try again.', 'error');
+                btn.innerHTML = originalHtml;
+                btn.disabled = false;
+                lucide.createIcons();
+                console.error(err);
+            });
+        }
     </script>
 </body>
 </html>

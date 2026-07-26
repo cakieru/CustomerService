@@ -128,11 +128,25 @@ class AdminController extends Controller
 
     /**
      * Update ticket status
+     * FIXED: Sets resolved_at when status becomes 'resolved'
      */
     public function updateStatus(Request $request, Ticket $ticket)
     {
         $request->validate(['status' => 'required|in:open,in-progress,resolved,closed']);
-        $ticket->update(['status' => $request->status]);
+
+        $updateData = ['status' => $request->status];
+
+        // Set resolved_at when marking as resolved
+        if ($request->status === 'resolved' && !$ticket->resolved_at) {
+            $updateData['resolved_at'] = now();
+        }
+
+        // Set responded_at when marking as in-progress for the first time
+        if ($request->status === 'in-progress' && !$ticket->responded_at) {
+            $updateData['responded_at'] = now();
+        }
+
+        $ticket->update($updateData);
 
         try {
             SlaCalculator::updateSlaData();
@@ -163,6 +177,7 @@ class AdminController extends Controller
 
     /**
      * Post a reply to the ticket
+     * FIXED: Sets resolved_at when resolve_ticket checkbox is checked
      */
     public function reply(Request $request, Ticket $ticket)
     {
@@ -174,12 +189,24 @@ class AdminController extends Controller
             'body' => $request->body,
         ]);
 
+        $updateData = [];
+
         if ($ticket->status === 'open') {
-            $ticket->update(['status' => 'in-progress']);
+            $updateData['status'] = 'in-progress';
+            if (!$ticket->responded_at) {
+                $updateData['responded_at'] = now();
+            }
         }
 
         if ($request->has('resolve_ticket')) {
-            $ticket->update(['status' => 'resolved']);
+            $updateData['status'] = 'resolved';
+            if (!$ticket->resolved_at) {
+                $updateData['resolved_at'] = now();
+            }
+        }
+
+        if (!empty($updateData)) {
+            $ticket->update($updateData);
         }
 
         try {
@@ -195,10 +222,20 @@ class AdminController extends Controller
 
     /**
      * Resolve the ticket
+     * FIXED: Now sets resolved_at
      */
     public function resolve(Ticket $ticket)
     {
-        $ticket->update(['status' => 'resolved']);
+        $ticket->update([
+            'status' => 'resolved',
+            'resolved_at' => $ticket->resolved_at ?? now(),
+        ]);
+
+        try {
+            SlaCalculator::updateSlaData();
+        } catch (\Exception $e) {
+            \Log::error('SLA Update failed after resolve: ' . $e->getMessage());
+        }
 
         return redirect()
             ->route('admin.support.tickets.show', $ticket)
@@ -207,10 +244,21 @@ class AdminController extends Controller
 
     /**
      * Close the ticket
+     * FIXED: Also sets resolved_at if not already set (closed = resolved)
      */
     public function close(Ticket $ticket)
     {
-        $ticket->update(['status' => 'closed']);
+        $updateData = ['status' => 'closed'];
+        if (!$ticket->resolved_at) {
+            $updateData['resolved_at'] = now();
+        }
+        $ticket->update($updateData);
+
+        try {
+            SlaCalculator::updateSlaData();
+        } catch (\Exception $e) {
+            \Log::error('SLA Update failed after close: ' . $e->getMessage());
+        }
 
         return redirect()
             ->route('admin.support.tickets.show', $ticket)
@@ -257,21 +305,21 @@ class AdminController extends Controller
     }
 
     /**
- * Legacy method for web.php route compatibility
- */
-public function assignAgent(Request $request, $ticket)
-{
-    $request->validate([
-        'agent_id' => 'nullable|exists:users,id'
-    ]);
+     * Legacy method for web.php route compatibility
+     */
+    public function assignAgent(Request $request, $ticket)
+    {
+        $request->validate([
+            'agent_id' => 'nullable|exists:users,id'
+        ]);
 
-    $ticket = \App\Models\Ticket::findOrFail($ticket);
-    $ticket->update([
-        'agent_id' => $request->agent_id
-    ]);
+        $ticket = \App\Models\Ticket::findOrFail($ticket);
+        $ticket->update([
+            'agent_id' => $request->agent_id
+        ]);
 
-    return back()->with('success', 'Agent assigned successfully.');
-}
+        return back()->with('success', 'Agent assigned successfully.');
+    }
 
     /**
      * Save admin-only notes for the ticket
@@ -291,12 +339,7 @@ public function assignAgent(Request $request, $ticket)
             ->with('success', 'Admin notes saved successfully.');
     }
 
-    
-
     /**
-         * Update ticket priority and recalculate SLA due date
-         */
-            /**
      * Update ticket priority and recalculate SLA due date
      */
     public function updatePriority(Request $request, Ticket $ticket)

@@ -111,3 +111,6 @@ Route::get('/terms', function () {
 Route::get('/tickets/{ticket}', [CustomerController::class, 'show'])->name('customer.tickets.show');
 
 Route::post('/tickets/{ticket}/priority', [AdminController::class, 'updatePriority'])->name('admin.support.tickets.priority');
+
+#for SLA API
+Route::post('/sla-reports/send', [SlaReportController::class, 'sendToDepartments'])->name('sla-reports.send');

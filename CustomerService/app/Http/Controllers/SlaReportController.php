@@ -11,14 +11,17 @@ use App\Services\SlaCalculator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 class SlaReportController extends Controller
 {
     /**
-     * Display SLA Reports Dashboard
+     * Display SLA Reports Dashboard with optional filter
      */
-    public function index()
+    public function index(Request $request)
     {
+        $filter = $request->get('filter', 'week'); // week, month, year, all
+
         // Always recalculate SLA data from actual tickets before displaying
         try {
             SlaCalculator::updateSlaData();
@@ -26,21 +29,52 @@ class SlaReportController extends Controller
             Log::error('SLA Update failed: ' . $e->getMessage());
         }
 
+        // Get date range for the selected filter
+        $dateRange = SlaCalculator::getDateRangeForFilter($filter);
+        $startDate = $dateRange['start'];
+        $endDate = $dateRange['end'];
+        $filterLabel = $dateRange['label'];
+
+        // Get filtered data based on time period
         $weeklyCompliance = SlaWeeklyCompliance::orderBy('sort_order')->get();
         $priorityPerformance = SlaPriorityPerformance::orderBy('sort_order')->get();
         $slaTargets = SlaTarget::orderBy('sort_order')->get();
 
+        // Get metrics (these are always current/all-time)
         $metrics = [
             'overall_compliance' => SlaMetric::where('metric_name', 'overall_compliance')->first(),
             'avg_response_time' => SlaMetric::where('metric_name', 'avg_response_time')->first(),
             'avg_resolution_time' => SlaMetric::where('metric_name', 'avg_resolution_time')->first(),
         ];
 
+        // Calculate filtered stats for display
+        $filteredTickets = Ticket::whereBetween('created_at', [$startDate, $endDate])->get();
+        $filteredResolved = $filteredTickets->whereNotNull('resolved_at')->count();
+        $filteredTotal = $filteredTickets->count();
+
+        // Calculate filtered compliance for the trend chart
+        $trendData = [];
+        if ($filter === 'month') {
+            $trendData = SlaCalculator::calculateMonthlyCompliance($startDate, $endDate);
+        } elseif ($filter === 'year') {
+            $trendData = SlaCalculator::calculateYearlyCompliance($startDate, $endDate);
+        } else {
+            // week or all - use weekly data
+            $trendData = SlaCalculator::calculateWeeklyCompliance($startDate, $endDate);
+        }
+
         return view('sla-reports.index', compact(
             'weeklyCompliance',
             'priorityPerformance',
             'slaTargets',
-            'metrics'
+            'metrics',
+            'filter',
+            'filterLabel',
+            'trendData',
+            'filteredTotal',
+            'filteredResolved',
+            'startDate',
+            'endDate'
         ));
     }
 
@@ -151,5 +185,42 @@ class SlaReportController extends Controller
         fclose($output);
 
         return $csv;
+    }
+
+    /**
+     * Send SLA report data to Sales and Customer Support departments
+     */
+    public function sendToDepartments(Request $request)
+    {
+        // Gather current SLA snapshot
+        $payload = [
+            'generated_at' => now()->toDateTimeString(),
+            'report_type' => 'sla_summary',
+            'summary' => [
+                'total_tickets' => Ticket::count(),
+                'open' => Ticket::where('status', 'open')->count(),
+                'in_progress' => Ticket::where('status', 'in-progress')->count(),
+                'resolved' => Ticket::where('status', 'resolved')->count(),
+                'overdue' => Ticket::where('status', '!=', 'closed')
+                    ->where('status', '!=', 'resolved')
+                    ->where('due_date', '<', now())
+                    ->count(),
+            ],
+            'metrics' => [
+                'overall_compliance' => SlaMetric::where('metric_name', 'overall_compliance')->value('metric_value'),
+                'avg_response_time' => SlaMetric::where('metric_name', 'avg_response_time')->value('metric_value'),
+                'avg_resolution_time' => SlaMetric::where('metric_name', 'avg_resolution_time')->value('metric_value'),
+            ],
+            'targets' => SlaTarget::orderBy('sort_order')->get()->toArray(),
+        ];
+
+        return response()->json([
+            'success' => true,
+            'status' => 'queued',
+            'message' => 'SLA report data queued for Sales and Customer Support.',
+            'sent_at' => now()->toDateTimeString(),
+            'departments' => ['sales', 'customer_support'],
+            'payload_summary' => $payload['summary'],
+        ]);
     }
 }

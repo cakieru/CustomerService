@@ -53,6 +53,48 @@
         <header class="h-16 border-b border-gray-200 bg-white flex items-center justify-between px-8 flex-shrink-0">
             <h2 class="text-lg font-bold text-gray-800">Ticket Management</h2>
             <div class="flex items-center space-x-4">
+                <div class="relative" id="notiWrapper">
+                    <button id="notiToggle" class="relative p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-all focus:outline-none cursor-pointer">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                        @php
+                            $notifyCount = \App\Models\Ticket::where('status', 'open')->count();
+                        @endphp
+                        @if($notifyCount > 0)
+                            <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
+                        @endif
+                    </button>
+                    <div id="notiDropdown" class="hidden absolute right-0 mt-2 w-72 sm:w-[360px] bg-white border border-gray-200 rounded-xl shadow-2xl z-50 flex flex-col overflow-hidden">
+                        <div class="p-4 border-b border-gray-100 flex items-center justify-between">
+                            <h3 class="text-sm font-bold text-gray-900">Notifications</h3>
+                            <button class="text-xs font-semibold text-blue-600 hover:underline">Mark all as read</button>
+                        </div>
+                        <div class="max-h-[380px] overflow-y-auto divide-y divide-gray-100">
+                            @php
+                                $notifications = \App\Models\Ticket::with('customer')->where('status', 'open')->orderBy('created_at', 'desc')->take(5)->get();
+                            @endphp
+                            @forelse($notifications as $notify)
+                                <a href="{{ route('admin.support.tickets.show', $notify->id) }}" class="p-4 hover:bg-gray-50 transition-all flex items-start gap-3 relative block">
+                                    <div class="w-8 h-8 rounded-full bg-orange-100 text-orange-700 flex-shrink-0 flex items-center justify-center font-bold text-xs">
+                                        {{ strtoupper(substr($notify->customer->name ?? 'C', 0, 2)) }}
+                                    </div>
+                                    <div class="flex-1 pr-3">
+                                        <p class="text-xs font-bold text-gray-900 truncate">{{ $notify->subject ?? 'New Support Ticket' }}</p>
+                                        <p class="text-[11px] text-gray-500 mt-0.5"><span class="text-blue-600 font-semibold">#{{ $notify->ticket_reference ?? 'TKT-'.$notify->id }}</span> by {{ $notify->customer->name ?? 'Guest' }}</p>
+                                        <span class="text-[10px] text-gray-400 block mt-1">{{ $notify->created_at->diffForHumans() }}</span>
+                                    </div>
+                                    <span class="w-2 h-2 bg-blue-600 rounded-full absolute right-4 top-1/2 -translate-y-1/2"></span>
+                                </a>
+                            @empty
+                                <div class="p-6 text-center text-xs text-gray-400">All caught up! No unread notifications.</div>
+                            @endforelse
+                        </div>
+                        <div class="p-3 bg-gray-50 border-t border-gray-100 text-center">
+                            <a href="{{ route('agent') }}" class="w-full inline-flex items-center justify-center gap-2 py-2 border border-gray-200 rounded-lg text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 transition-all">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg> View all notifications
+                            </a>
+                        </div>
+                    </div>
+                </div>
                 <div class="h-9 w-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-semibold text-sm">AD</div>
             </div>
         </header>
@@ -140,5 +182,23 @@
             </div>
         </div>
     </main>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Notification dropdown toggle
+            const toggleBtn = document.getElementById('notiToggle');
+            const dropdown = document.getElementById('notiDropdown');
+            if (toggleBtn && dropdown) {
+                toggleBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    dropdown.classList.toggle('hidden');
+                });
+                document.addEventListener('click', (e) => {
+                    if (!dropdown.contains(e.target) && e.target !== toggleBtn) {
+                        dropdown.classList.add('hidden');
+                    }
+                });
+            }
+        });
+    </script>
 </body>
 </html>
