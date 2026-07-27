@@ -14,8 +14,10 @@ return new class extends Migration
         Schema::create('tickets', function (Blueprint $table) {
             $table->id();
             $table->string('ticket_reference')->unique(); // e.g., TKT-1001
-            $table->foreignId('user_id')->constrained()->onDelete('cascade'); // The customer
-            $table->foreignId('agent_id')->nullable()->constrained('users')->onDelete('set null'); // The assigned admin
+            $table->unsignedBigInteger('user_id');
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade'); // The customer
+            $table->unsignedBigInteger('agent_id')->nullable();
+            $table->foreign('agent_id')->references('id')->on('users')->onDelete('set null'); // The assigned admin
             $table->string('subject');
             $table->text('description');
             $table->string('category');

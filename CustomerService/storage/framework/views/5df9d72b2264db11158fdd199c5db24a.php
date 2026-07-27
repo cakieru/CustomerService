@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SupportDesk - Ticket #<?php echo e($ticket->ticket_reference); ?></title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@100..1000&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Google Sans Flex', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        @keyframes detailFadeInUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-detail-reveal {
+            opacity: 0;
+            animation: detailFadeInUp 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            animation-delay: calc(var(--panel-index, 0) * 60ms);
+        }
+        .interactive-card {
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .interactive-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -6px rgba(0, 0, 0, 0.04), 0 3px 8px -2px rgba(0, 0, 0, 0.02);
+            border-color: #e2e8f0;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans antialiased min-h-screen flex overflow-hidden">
+
+    <aside class="w-64 bg-white border-r border-gray-200 flex flex-col justify-between fixed h-full z-30">
+        <div>
+            <div class="p-6 border-b border-gray-100">
+                <h1 class="text-xl font-bold text-gray-900 flex items-center gap-2">SupportDesk</h1>
+                <p class="text-xs text-gray-400 mt-1">Admin Support Portal</p>
+            </div>
+            <nav class="p-4 space-y-1">
+                <a href="<?php echo e(route('admin.support.dashboard')); ?>" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 transition-all duration-300">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
+                </a>
+                <a href="<?php echo e(route('agent')); ?>" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-blue-700 bg-blue-50 rounded-lg transition-all duration-300">
+                    <i data-lucide="ticket" class="w-5 h-5 text-blue-600"></i> Tickets
+                </a>
+                <a href="<?php echo e(route('KnowledgeBase')); ?>" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 transition-all duration-300">
+                    <i data-lucide="book-open" class="w-5 h-5"></i> Knowledge Base
+                </a>
+                <a href="<?php echo e(route('admin.support.reports')); ?>" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 transition-all duration-300">
+                    <i data-lucide="bar-chart-3" class="w-5 h-5"></i> SLA Reports
+                </a>
+            </nav>
+        </div>
+        <div class="p-4 border-t border-gray-100">
+            <a href="<?php echo e(route('CustomerPortal')); ?>" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-purple-700 hover:bg-purple-50 rounded-lg transition-all duration-300">
+                <i data-lucide="user" class="w-5 h-5"></i> Customer Portal
+            </a>
+        </div>
+    </aside>
+
+    <div class="flex-1 pl-64 flex flex-col h-screen overflow-hidden">
+
+        <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8 sticky top-0 z-20 flex-shrink-0">
+            <div class="relative w-96">
+                <i data-lucide="search" class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                <input type="text" placeholder="Search tickets, customers, articles..." class="w-full pl-10 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all">
+            </div>
+            <div class="flex items-center gap-4">
+                <button class="relative p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-all">
+                    <i data-lucide="bell" class="w-5 h-5"></i>
+                    <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
+                </button>
+                <div class="flex items-center gap-3 pl-2 border-l border-gray-200">
+                    <div class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-semibold text-xs">
+                        <?php echo e(strtoupper(substr(auth()->user()->name ?? 'AD', 0, 2))); ?>
+
+                    </div>
+                    <div>
+                        <p class="text-xs font-semibold text-gray-900 leading-tight"><?php echo e(auth()->user()->name ?? 'Admin User'); ?></p>
+                        <p class="text-[10px] text-gray-400">Support Administrator</p>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="p-8 flex-1 overflow-y-auto h-[calc(100vh-4rem)]">
+
+            <?php if(session('success')): ?>
+                <div class="mb-4 p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700 text-sm font-medium flex items-center gap-2 animate-detail-reveal" style="--panel-index: 0;">
+                    <i data-lucide="check-circle" class="w-4 h-4"></i>
+                    <?php echo e(session('success')); ?>
+
+                </div>
+            <?php endif; ?>
+
+            <a href="<?php echo e(route('agent')); ?>" class="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 text-sm font-medium hover:-translate-x-1 transition-all duration-300 mb-6">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Tickets
+            </a>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+
+                <div class="lg:col-span-2 space-y-6">
+
+                    <div class="animate-detail-reveal bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-4" style="--panel-index: 0;">
+                        <div class="flex items-center justify-between flex-wrap gap-3">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-bold text-gray-500 bg-gray-100 px-2.5 py-1 rounded">
+                                    #<?php echo e($ticket->ticket_reference); ?>
+
+                                </span>
+
+                                <?php
+                                    $statusColors = [
+                                        'open' => 'bg-emerald-50 text-emerald-600',
+                                        'in-progress' => 'bg-amber-50 text-amber-600',
+                                        'resolved' => 'bg-blue-50 text-blue-600',
+                                        'closed' => 'bg-gray-100 text-gray-600',
+                                    ];
+                                    $statusClass = $statusColors[$ticket->status] ?? 'bg-gray-100 text-gray-600';
+                                ?>
+                                <span class="text-xs font-semibold px-2.5 py-1 rounded uppercase <?php echo e($statusClass); ?>">
+                                    <?php echo e($ticket->status); ?>
+
+                                </span>
+
+                                <?php
+                                    $priorityColors = [
+                                        'high' => 'bg-red-50 text-red-600',
+                                        'medium' => 'bg-amber-50 text-amber-600',
+                                        'low' => 'bg-blue-50 text-blue-600',
+                                    ];
+                                    $priorityClass = $priorityColors[$ticket->priority] ?? 'bg-gray-100 text-gray-600';
+                                ?>
+                                <span class="text-xs font-semibold px-2.5 py-1 rounded uppercase <?php echo e($priorityClass); ?>">
+                                    <?php echo e($ticket->priority); ?> Priority
+                                </span>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <?php if($ticket->status !== 'resolved' && $ticket->status !== 'closed'): ?>
+                                    <form action="<?php echo e(route('admin.support.tickets.resolve', $ticket)); ?>" method="POST" class="inline">
+                                        <?php echo csrf_field(); ?>
+                                        <?php echo method_field('PATCH'); ?>
+                                        <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-all">
+                                            <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Resolve
+                                        </button>
+                                    </form>
+                                <?php endif; ?>
+
+                                <?php if($ticket->status !== 'closed'): ?>
+                                    <form action="<?php echo e(route('admin.support.tickets.close', $ticket)); ?>" method="POST" class="inline">
+                                        <?php echo csrf_field(); ?>
+                                        <?php echo method_field('PATCH'); ?>
+                                        <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all">
+                                            <i data-lucide="x-circle" class="w-3.5 h-3.5"></i> Close
+                                        </button>
+                                    </form>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h2 class="text-xl font-bold text-gray-900 mb-2"><?php echo e($ticket->subject); ?></h2>
+                            <div class="p-4 bg-gray-50 border border-gray-100 rounded-lg text-sm text-gray-700 leading-relaxed">
+                                <?php echo e($ticket->description); ?>
+
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2 pt-1">
+                            <span class="inline-flex items-center gap-1 bg-gray-100 text-gray-600 text-xs px-2.5 py-1 rounded-md">
+                                <i data-lucide="tag" class="w-3 h-3"></i> <?php echo e($ticket->category ?? 'General'); ?>
+
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="animate-detail-reveal bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden" style="--panel-index: 1;">
+                        <div class="p-4 border-b border-gray-100 bg-gray-50/50">
+                            <h3 class="font-bold text-gray-900 text-base flex items-center gap-2">
+                                <i data-lucide="message-square" class="w-4 h-4 text-blue-600"></i>
+                                Activity & Replies (<?php echo e($ticket->replies->count()); ?>)
+                            </h3>
+                        </div>
+
+                        <div class="p-6 space-y-6 flex flex-col gap-4">
+                            <?php $__empty_1 = true; $__currentLoopData = $ticket->replies; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $reply): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                                <?php
+                                    $isAdmin = $reply->user && $reply->user->role === 'admin';
+                                    $isSystem = $reply->sender === 'System' || !$reply->user;
+                                    $isCurrentUser = $reply->user_id == auth()->id();
+                                    $displayName = $reply->user->name ?? $reply->sender ?? 'Unknown';
+                                ?>
+
+                                <?php if($isSystem): ?>
+                                    <div class="flex justify-center">
+                                        <span class="text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full">
+                                            <?php echo e($reply->body); ?>
+
+                                        </span>
+                                    </div>
+                                <?php else: ?>
+                                    <div class="flex gap-4 <?php echo e($isAdmin ? 'flex-row-reverse' : ''); ?>">
+                                        <div class="w-9 h-9 <?php echo e($isAdmin ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'); ?> font-semibold rounded-full flex-shrink-0 flex items-center justify-center text-xs shadow-sm">
+                                            <?php echo e(strtoupper(substr($displayName, 0, 2))); ?>
+
+                                        </div>
+
+                                        <div class="space-y-1 flex-1 max-w-[80%] <?php echo e($isAdmin ? 'text-right' : ''); ?>">
+                                            <div class="flex items-baseline gap-2 <?php echo e($isAdmin ? 'justify-end' : 'justify-start'); ?>">
+                                                <h5 class="font-semibold text-sm text-gray-900"><?php echo e($displayName); ?></h5>
+                                                <?php if($isAdmin): ?>
+                                                    <span class="text-[10px] font-bold bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">Admin</span>
+                                                <?php endif; ?>
+                                                <span class="text-xs text-gray-400"><?php echo e($reply->created_at->diffForHumans()); ?></span>
+                                            </div>
+
+                                            <div class="inline-block p-4 rounded-xl text-sm leading-relaxed text-left shadow-sm <?php echo e($isAdmin ? 'bg-blue-600 text-white border border-blue-700' : 'bg-gray-50 text-gray-700 border border-gray-100'); ?>">
+                                                <?php echo e($reply->body); ?>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                                <div class="text-center text-gray-400 py-8">
+                                    <i data-lucide="inbox" class="w-8 h-8 mx-auto stroke-1 mb-2"></i>
+                                    <p class="text-sm">No replies yet. Be the first to respond!</p>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+
+                        <form action="<?php echo e(route('admin.support.tickets.reply', $ticket)); ?>" method="POST" class="p-4 border-t border-gray-100 bg-gray-50/50 space-y-3">
+                            <?php echo csrf_field(); ?>
+                            <div class="flex items-start gap-3">
+                                <div class="w-8 h-8 bg-blue-600 text-white rounded-full flex-shrink-0 flex items-center justify-center font-semibold text-xs mt-1 shadow-sm">
+                                    <?php echo e(strtoupper(substr(auth()->user()->name ?? 'A', 0, 2))); ?>
+
+                                </div>
+                                <div class="w-full">
+                                    <textarea name="body" rows="3" placeholder="Type your reply here..." required
+                                        class="w-full p-3 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none shadow-sm transition-all <?php $__errorArgs = ['body'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> border-red-500 <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>"></textarea>
+                                    <?php $__errorArgs = ['body'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                                        <p class="text-xs text-red-500 mt-1"><?php echo e($message); ?></p>
+                                    <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between pl-11">
+                                <label class="flex items-center gap-2 text-xs font-medium text-gray-600 cursor-pointer select-none group">
+                                    <input type="checkbox" name="resolve_ticket" class="rounded text-blue-600 border-gray-300 focus:ring-blue-500 w-4 h-4 transition-all">
+                                    <span class="group-hover:text-gray-900 transition-colors">Mark ticket as resolved</span>
+                                </label>
+
+                                <button type="submit" class="flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow active:scale-[0.98] transition-all">
+                                    Send Reply <i data-lucide="send" class="w-3.5 h-3.5"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+
+                    <div class="animate-detail-reveal interactive-card bg-white border border-gray-200 rounded-xl p-5 shadow-sm space-y-4" style="--panel-index: 2;">
+                        <h4 class="font-bold text-gray-900 text-sm flex items-center gap-2">
+                            <i data-lucide="user" class="w-4 h-4 text-gray-500"></i> Customer Profile
+                        </h4>
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-gray-200 text-gray-700 rounded-full flex items-center justify-center font-bold text-sm shadow-sm">
+                                <?php echo e(strtoupper(substr($ticket->customer->name ?? 'U', 0, 2))); ?>
+
+                            </div>
+                            <div>
+                                <p class="font-bold text-sm text-gray-900"><?php echo e($ticket->customer->name ?? 'N/A'); ?></p>
+                                <p class="text-xs text-gray-400"><?php echo e($ticket->customer->email ?? 'N/A'); ?></p>
+                            </div>
+                        </div>
+                        <a href="<?php echo e(route('admin.customers.show', $ticket->user_id)); ?>" class="block w-full text-center py-2 text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg active:scale-[0.98] transition-all">
+                            View Customer Profile
+                        </a>
+                    </div>
+
+                    <div class="animate-detail-reveal interactive-card bg-white border border-gray-200 rounded-xl p-5 shadow-sm space-y-4" style="--panel-index: 3;">
+                        <h4 class="font-bold text-gray-900 text-sm flex items-center gap-2">
+                            <i data-lucide="sliders" class="w-4 h-4 text-gray-500"></i> Ticket Settings
+                        </h4>
+
+                        <!-- Assign Agent -->
+                        <form action="<?php echo e(route('admin.support.tickets.assign', $ticket)); ?>" method="POST" class="space-y-3">
+                            <?php echo csrf_field(); ?>
+                            <div>
+                                <label class="text-[11px] font-semibold uppercase tracking-wider text-gray-400 block mb-1">Assign to Agent</label>
+                                <div class="flex gap-2">
+                                    <select name="agent_id" class="w-full text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer">
+                                        <option value="">-- Unassigned --</option>
+                                        <?php $__currentLoopData = \App\Models\User::where('role', 'admin')->orderBy('name')->get(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $agent): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                            <option value="<?php echo e($agent->id); ?>" <?php echo e($ticket->agent_id == $agent->id ? 'selected' : ''); ?>>
+                                                <?php echo e($agent->name); ?>
+
+                                            </option>
+                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                    </select>
+                                    <button type="submit" class="px-3 py-1.5 text-xs font-medium text-blue-600 border border-blue-200 hover:bg-blue-50 rounded-lg transition-colors">
+                                        Save
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+
+                        <!-- Update Priority -->
+                        <form action="<?php echo e(route('admin.support.tickets.priority', $ticket)); ?>" method="POST" class="space-y-3">
+                            <?php echo csrf_field(); ?>
+                            <div>
+                                <label class="text-[11px] font-semibold uppercase tracking-wider text-gray-400 block mb-1">Priority Level</label>
+                                <div class="flex gap-2">
+                                    <select name="priority" class="w-full text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer">
+                                        <option value="critical" <?php echo e($ticket->priority === 'critical' ? 'selected' : ''); ?>>Critical (4h SLA)</option>
+                                        <option value="high" <?php echo e($ticket->priority === 'high' ? 'selected' : ''); ?>>High (8h SLA)</option>
+                                        <option value="medium" <?php echo e($ticket->priority === 'medium' ? 'selected' : ''); ?>>Medium (16h SLA)</option>
+                                        <option value="low" <?php echo e($ticket->priority === 'low' ? 'selected' : ''); ?>>Low (24h SLA)</option>
+                                    </select>
+                                    <button type="submit" class="px-3 py-1.5 text-xs font-medium text-emerald-600 border border-emerald-200 hover:bg-emerald-50 rounded-lg transition-colors">
+                                        Update
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Admin Notepad -->
+                    <div class="animate-detail-reveal interactive-card bg-white border border-gray-200 rounded-xl p-5 shadow-sm space-y-4" style="--panel-index: 4;">
+                        <h4 class="font-bold text-gray-900 text-sm flex items-center gap-2">
+                            <i data-lucide="file-text" class="w-4 h-4 text-gray-500"></i> Admin Notepad
+                        </h4>
+                        
+                        <form action="<?php echo e(route('admin.support.tickets.notes', $ticket)); ?>" method="POST" class="space-y-3">
+                            <?php echo csrf_field(); ?>
+                            <div>
+                                <textarea 
+                                    name="admin_notes" 
+                                    rows="5" 
+                                    placeholder="Write internal notes, next steps, or reminders about this ticket…"
+                                    class="w-full p-3 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none transition-all"
+                                ><?php echo e(old('admin_notes', $ticket->admin_notes)); ?></textarea>
+                            </div>
+                            <button type="submit" class="w-full text-center py-2 text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg active:scale-[0.98] transition-all">
+                                Save Notes
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="animate-detail-reveal interactive-card bg-white border border-gray-200 rounded-xl p-5 shadow-sm space-y-4" style="--panel-index: 5;">
+                        <h4 class="font-bold text-gray-900 text-sm flex items-center gap-2">
+                            <i data-lucide="clock" class="w-4 h-4 text-gray-500"></i> SLA & Metrics
+                        </h4>
+
+                        <div class="space-y-3 text-xs">
+                            <div>
+                                <span class="text-gray-400 font-medium block">First Response Time</span>
+                                <p class="font-semibold text-gray-800 mt-0.5">
+                                    <?php if($ticket->replies->where('user.role', 'admin')->count() > 0): ?>
+                                        <span class="text-emerald-600 inline-flex items-center gap-1">
+                                            <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+                                            Responded
+                                        </span>
+                                    <?php else: ?>
+                                        <span class="text-amber-600 inline-flex items-center gap-1">
+                                            <i data-lucide="hourglass" class="w-3.5 h-3.5"></i> Awaiting response
+                                        </span>
+                                    <?php endif; ?>
+                                </p>
+                            </div>
+
+                            <div class="border-t border-gray-100 pt-2">
+                                <span class="text-gray-400 font-medium block">Resolution Time</span>
+                                <p class="font-semibold text-gray-800 mt-0.5">
+                                    <?php if($ticket->status === 'resolved'): ?>
+                                        <span class="text-emerald-600 inline-flex items-center gap-1">
+                                            <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+                                            Resolved
+                                        </span>
+                                    <?php else: ?>
+                                        <span class="text-amber-600 inline-flex items-center gap-1">
+                                            <i data-lucide="hourglass" class="w-3.5 h-3.5"></i> Not resolved yet
+                                        </span>
+                                    <?php endif; ?>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="animate-detail-reveal interactive-card bg-white border border-gray-200 rounded-xl p-5 shadow-sm space-y-3" style="--panel-index: 6;">
+                        <h4 class="font-bold text-gray-900 text-sm flex items-center gap-2">
+                            <i data-lucide="calendar" class="w-4 h-4 text-gray-500"></i> Timeline
+                        </h4>
+                        <div class="space-y-2 text-xs text-gray-600">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="plus-circle" class="w-3.5 h-3.5 text-gray-400"></i>
+                                <span>Created: <?php echo e($ticket->created_at->format('M d, Y H:i')); ?></span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="alert-circle" class="w-3.5 h-3.5 text-gray-400"></i>
+                                <span>Due Date: <?php echo e($ticket->due_date ? $ticket->due_date->format('M d, Y H:i') : 'N/A'); ?></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Attachments Panel -->
+                    <?php if($ticket->attachments && $ticket->attachments->count() > 0): ?>
+                    <div class="animate-detail-reveal interactive-card bg-white border border-gray-200 rounded-xl p-5 shadow-sm space-y-3" style="--panel-index: 6;">
+                        <h4 class="font-bold text-gray-900 text-sm flex items-center gap-2">
+                            <i data-lucide="paperclip" class="w-4 h-4 text-gray-500"></i> Attachments (<?php echo e($ticket->attachments->count()); ?>)
+                        </h4>
+                        <div class="space-y-2">
+                            <?php $__currentLoopData = $ticket->attachments; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $file): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <a href="<?php echo e(asset('storage/' . $file->path)); ?>" target="_blank" class="flex items-center justify-between border border-gray-100 rounded-lg p-2.5 bg-gray-50/50 hover:bg-gray-100/70 transition-colors group">
+                                <div class="flex items-center gap-2 text-xs min-w-0">
+                                    <div class="w-8 h-8 bg-white border border-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 text-blue-500 shadow-sm">
+                                        <i data-lucide="file" class="w-4 h-4"></i>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <p class="font-medium text-gray-800 truncate"><?php echo e($file->filename); ?></p>
+                                    </div>
+                                </div>
+                                <i data-lucide="external-link" class="w-4 h-4 text-gray-400 group-hover:text-gray-700 flex-shrink-0 ml-2"></i>
+                            </a>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+
+                    <div class="animate-detail-reveal interactive-card bg-white border border-red-100 rounded-xl p-5 shadow-sm space-y-3" style="--panel-index: 7;">
+                        <h4 class="font-bold text-red-600 text-sm flex items-center gap-2">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i> Danger Zone
+                        </h4>
+                        <form action="<?php echo e(route('admin.support.tickets.destroy', $ticket)); ?>" method="POST" onsubmit="return confirm('Are you sure you want to delete this ticket?');">
+                            <?php echo csrf_field(); ?>
+                            <?php echo method_field('DELETE'); ?>
+                            <button type="submit" class="w-full text-center py-2 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg active:scale-[0.98] transition-all">
+                                Delete Ticket
+                            </button>
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        });
+    </script>
+</body>
+</html><?php /**PATH C:\laragon\www\CustomerService\CustomerService\resources\views/admin/show.blade.php ENDPATH**/ ?>

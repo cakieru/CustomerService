@@ -65,7 +65,7 @@
             <!-- Navigation Links -->
             <nav class="flex items-center space-x-8">
                 <button onclick="resetPortalHome()" class="bg-[#f0f4f8] text-[#0f4c81] font-semibold px-4 py-2 rounded-xl text-sm transition-all duration-300 hover:opacity-90">Home</button>
-                <a href="{{ route('customer.tickets') }}" class="text-gray-500 hover:text-gray-800 font-medium text-sm transition-colors duration-300"></a> 
+                <a href="{{ route('customer.tickets') }}" class="text-gray-500 hover:text-gray-800 font-medium text-sm transition-colors duration-300">My Tickets</a> 
                 <a href="{{ route('customer.create') }}" class="bg-[#0f62fe] hover:bg-[#0052cc] text-white font-semibold px-5 py-2.5 rounded-xl text-sm shadow-sm hover:shadow-md flex items-center space-x-1.5 transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0">
                     <span>+ New Request</span>
                 </a>

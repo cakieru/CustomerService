@@ -4,21 +4,45 @@ namespace App\Http\Controllers;
 
 use App\Models\Ticket;
 use App\Models\TicketReply;
+use App\Models\User;
+use App\Services\SlaCalculator;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
-use App\Models\User;
 use Illuminate\Support\Facades\Session;
 
 class CustomerController extends Controller
 {
-    public function home()
-    {
-        return view('CustomerPortal');
-    }
+   public function home()
+{
+    // Fetch articles the same way KnowledgeBaseController does for customer portal
+    $query = \Illuminate\Support\Facades\DB::table('kb_articles')
+        ->where('visibility', 'public');
     
-    /**
-     * 1. DISPLAY ALL TICKETS
-     */
+    $dbArticles = $query->get();
+    $dbCategories = \Illuminate\Support\Facades\DB::table('article_categories')->get();
+
+    // Format articles collection for the UI (same logic as KnowledgeBaseController)
+    $articles = $dbArticles->map(function($article) {
+        return [
+            'id' => $article->id,
+            'title' => $article->title,
+            'desc' => $article->desc,
+            'category' => $article->category,
+            'catId' => $article->cat_id,
+            'views' => number_format($article->views),
+            'updated' => \Carbon\Carbon::parse($article->updated_at)->format('m/d/Y'),
+            'helpful' => $article->yes_votes + $article->no_votes > 0 
+                ? round(($article->yes_votes / ($article->yes_votes + $article->no_votes)) * 100) . '%' 
+                : '100%',
+            'tags' => explode(',', $article->tags),
+            'yesVotes' => $article->yes_votes,
+            'noVotes' => $article->no_votes,
+            'visibility' => $article->visibility,
+        ];
+    });
+
+    return view('CustomerPortal', compact('articles'));
+}
     public function index(Request $request)
     {
         $customerId = Session::get('customer_id');
@@ -39,18 +63,16 @@ class CustomerController extends Controller
 
         $tickets = $query->latest()->get();
 
-        return view('customer.index', compact('tickets'));
+        return view('customer.CustomerIndex', compact('tickets'));
     }
 
     /**
-     * 2. SHOW SINGLE TICKET DETAILS (✨ Fixed: This prevents your current error screen!)
+     * 2. SHOW SINGLE TICKET DETAILS
      */
     public function show($id)
     {
-        // Fetch the ticket with its replies, or throw a 404 if not found
         $ticket = Ticket::with(['replies.user'])->findOrFail($id);
         
-        // Security check: ensure the current session customer actually owns this ticket
         $customerId = Session::get('customer_id');
         if ($customerId && $ticket->user_id != $customerId) {
             abort(403, 'Unauthorized access to this ticket.');
@@ -70,49 +92,70 @@ class CustomerController extends Controller
     /**
      * 4. SUBMIT AND SAVE NEW TICKET
      */
-    
     public function store(Request $request)
-{
-    // 1. Removed 'priority' from here so Laravel doesn't block the submission
-    $request->validate([
-        'name'        => 'required|string|max:255',
-        'email'       => 'required|email|max:255',
-        'category'    => 'required',
-        'subject'     => 'required|string|max:255',
-        'description' => 'required|string',
-    ]);
+    {
+        $request->validate([
+            'name'        => 'required|string|max:255',
+            'email'       => 'required|email|max:255',
+            'category'    => 'required|string',
+            'subject'     => 'required|string|max:255',
+            'description' => 'required|string',
+            'attachments.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:10240',
+        ]);
 
-    // 2. Set the default priority internally since the user no longer chooses it
-    $priority = 'low';
+        $user = User::firstOrCreate(
+            ['email' => $request->email],
+            ['name' => $request->name, 'password' => bcrypt('password')]
+        );
 
-    // 3. Changed this to read from our internal variable $priority instead of $request
-    $hours = match ($priority) {
-        'high'   => 4, 
-        'medium' => 8, 
-        'low'    => 24, 
-        default  => 24,
-    };
+        Session::put('customer_id', $user->id);
 
-    $user = User::firstOrCreate(
-        ['email' => $request->email],
-        ['name' => $request->name, 'password' => bcrypt('password')]
-    );
+        // Determine priority based on category or default
+        $priority = 'low';
+        $priorityLevel = 'Low';
 
-    Session::put('customer_id', $user->id);
+        $hours = match ($priority) {
+            'high'   => 4, 
+            'medium' => 8, 
+            'low'    => 24, 
+            default  => 24,
+        };
 
-    Ticket::create([
-        'ticket_reference' => 'TKT-' . rand(1000, 9999),
-        'user_id'          => $user->id,
-        'subject'          => $request->subject,
-        'description'      => $request->description,
-        'category'         => $request->category,
-        'priority'         => $priority, // Passed our internal 'low' value to satisfy the database column
-        'status'           => 'open',
-        'due_date'         => Carbon::now()->addHours($hours),
-    ]);
+        $ticket = Ticket::create([
+            'ticket_reference' => 'TKT-' . rand(1000, 9999),
+            'user_id'          => $user->id,
+            'customer_name'    => $request->name,
+            'subject'          => $request->subject,
+            'description'      => $request->description,
+            'issue_description'=> $request->description,
+            'category'         => $request->category,
+            'priority'         => $priority,
+            'priority_level'   => $priorityLevel,
+            'status'           => 'open',
+            'due_date'         => Carbon::now()->addHours($hours),
+        ]);
 
-    return redirect('/tickets')->with('success', 'Ticket created successfully!');
+        // Handle file attachments
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                $path = $file->store('ticket-attachments', 'public');
+                $ticket->attachments()->create([
+                    'filename' => $file->getClientOriginalName(),
+                    'path'     => $path,
+                ]);
+            }
+        }
+
+        // Update SLA metrics after creating ticket
+        // Update SLA metrics
+try {
+    SlaCalculator::updateSlaData();
+} catch (\Exception $e) {
+    // SLA failed but reply was saved
 }
+
+        return redirect()->route('customer.tickets')->with('success', 'Ticket created successfully!');
+    }
 
     /**
      * 5. START LIVE CHAT LOGIC
@@ -135,10 +178,13 @@ class CustomerController extends Controller
                   ?? Ticket::create([
             'ticket_reference' => 'CHAT-' . rand(1000, 9999),
             'user_id'          => $user->id,
+            'customer_name'    => $user->name,
             'subject'          => 'Live Chat Session',
             'description'      => 'Active floating bubble conversation thread.',
+            'issue_description'=> 'Active floating bubble conversation thread.',
             'category'         => 'Technical Support',
             'priority'         => 'medium',
+            'priority_level'   => 'Medium',
             'status'           => 'open',
             'due_date'         => now()->addHours(8),
         ]);
@@ -183,30 +229,86 @@ class CustomerController extends Controller
      * SUBMIT TICKET REPLY (Customer)
      */
     public function reply(Request $request, Ticket $ticket)
-    {
-        $request->validate([
-            'body' => 'required|string',
-        ]);
+{
+    $request->validate([
+        'body' => 'required|string',
+    ]);
 
-        $customerId = Session::get('customer_id');
+    $customerId = Session::get('customer_id');
 
-        // Security check: ensure the user owns this ticket
-        if ($customerId && $ticket->user_id != $customerId) {
-            abort(403, 'Unauthorized access to this ticket.');
-        }
-
-        TicketReply::create([
-            'ticket_id' => $ticket->id,
-            'user_id'   => $customerId ?? 1, // Fallback to 1 if session expired during testing
-            'body'      => $request->body,
-        ]);
-
-        // If the ticket was resolved/closed, reopen it when customer replies
-        if (in_array($ticket->status, ['resolved', 'closed'])) {
-            $ticket->update(['status' => 'open']);
-        }
-
-        return back()->with('success', 'Your reply has been sent.');
+    if ($customerId && $ticket->user_id != $customerId) {
+        abort(403, 'Unauthorized access to this ticket.');
     }
-    
+
+    TicketReply::create([
+        'ticket_id' => $ticket->id,
+        'user_id'   => $customerId ?? 1,
+        'body'      => $request->body,
+    ]);
+
+    // If the ticket was resolved/closed, reopen it when customer replies
+    if (in_array($ticket->status, ['resolved', 'closed'])) {
+        $ticket->update(['status' => 'open']);
+    }
+
+    // Update SLA metrics
+        // Update SLA metrics
+        try {
+            SlaCalculator::updateSlaData();
+        } catch (\Exception $e) {
+            // SLA failed but reply was saved
+        }
+
+    return back()->with('success', 'Your reply has been sent.');
+}
+
+    public function customerTicket($id)
+    {
+        $ticket = Ticket::findOrFail($id);
+        
+        $customerId = Session::get('customer_id');
+        if ($customerId && $ticket->user_id != $customerId) {
+            abort(403);
+        }
+
+        // Use ticket owner as fallback if session is missing
+        $customerId = $customerId ?? $ticket->user_id;
+
+        $replies = \DB::table('ticket_replies')
+            ->where('ticket_id', $ticket->id)
+            ->orderBy('created_at', 'asc')
+            ->get()
+            ->map(function($reply) use ($customerId) {
+                $user = User::find($reply->user_id);
+                
+                // Detect the automated system reply by its content
+                $isSystem = str_contains($reply->body, 'Thank you for reaching out! We have successfully received your reply');
+                
+                if ($isSystem) {
+                    return (object) [
+                        'sender'    => 'System',
+                        'user_name' => 'Support Assistant',
+                        'sent_at'   => $reply->created_at,
+                        'message'   => $reply->body,
+                    ];
+                }
+                
+                $isCustomer = $reply->user_id == $customerId;
+                
+                return (object) [
+                    'sender'    => $isCustomer ? 'Customer' : 'Agent',
+                    'user_name' => $isCustomer ? ($user?->name ?? 'You') : ($user?->name ?? 'Support Agent'),
+                    'sent_at'   => $reply->created_at,
+                    'message'   => $reply->body,
+                ];
+            });
+
+        $agent = $ticket->agent;
+
+        $attachments = \DB::table('ticket_attachments')
+            ->where('ticket_id', $ticket->id)
+            ->get();
+
+        return view('customer.customerTicket', compact('ticket', 'replies', 'agent', 'attachments'));
+    }
 }

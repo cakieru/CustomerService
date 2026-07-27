@@ -96,10 +96,48 @@
                 <input type="text" placeholder="Search tickets, customers, articles..." class="w-full pl-10 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all">
             </div>
             <div class="flex items-center gap-4">
-                <button class="relative p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-all">
-                    <i data-lucide="bell" class="w-5 h-5"></i>
-                    <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
-                </button>
+                <div class="relative" id="notiWrapper">
+                    <button id="notiToggle" class="relative p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-all focus:outline-none cursor-pointer">
+                        <i data-lucide="bell" class="w-5 h-5"></i>
+                        @php
+                            $notifyCount = \App\Models\Ticket::where('status', 'open')->count();
+                        @endphp
+                        @if($notifyCount > 0)
+                            <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
+                        @endif
+                    </button>
+                    <div id="notiDropdown" class="hidden absolute right-0 mt-2 w-72 sm:w-[360px] bg-white border border-gray-200 rounded-xl shadow-2xl z-50 flex flex-col overflow-hidden">
+                        <div class="p-4 border-b border-gray-100 flex items-center justify-between">
+                            <h3 class="text-sm font-bold text-gray-900">Notifications</h3>
+                            <button class="text-xs font-semibold text-blue-600 hover:underline">Mark all as read</button>
+                        </div>
+                        <div class="max-h-[380px] overflow-y-auto divide-y divide-gray-100">
+                            @php
+                                $notifications = \App\Models\Ticket::with('customer')->where('status', 'open')->orderBy('created_at', 'desc')->take(5)->get();
+                            @endphp
+                            @forelse($notifications as $notify)
+                                <a href="{{ route('admin.support.tickets.show', $notify->id) }}" class="p-4 hover:bg-gray-50 transition-all flex items-start gap-3 relative block">
+                                    <div class="w-8 h-8 rounded-full bg-orange-100 text-orange-700 flex-shrink-0 flex items-center justify-center font-bold text-xs">
+                                        {{ strtoupper(substr($notify->customer->name ?? 'C', 0, 2)) }}
+                                    </div>
+                                    <div class="flex-1 pr-3">
+                                        <p class="text-xs font-bold text-gray-900 truncate">{{ $notify->subject ?? 'New Support Ticket' }}</p>
+                                        <p class="text-[11px] text-gray-500 mt-0.5"><span class="text-blue-600 font-semibold">#{{ $notify->ticket_reference ?? 'TKT-'.$notify->id }}</span> by {{ $notify->customer->name ?? 'Guest' }}</p>
+                                        <span class="text-[10px] text-gray-400 block mt-1">{{ $notify->created_at->diffForHumans() }}</span>
+                                    </div>
+                                    <span class="w-2 h-2 bg-blue-600 rounded-full absolute right-4 top-1/2 -translate-y-1/2"></span>
+                                </a>
+                            @empty
+                                <div class="p-6 text-center text-xs text-gray-400">All caught up! No unread notifications.</div>
+                            @endforelse
+                        </div>
+                        <div class="p-3 bg-gray-50 border-t border-gray-100 text-center">
+                            <a href="{{ route('agent') }}" class="w-full inline-flex items-center justify-center gap-2 py-2 border border-gray-200 rounded-lg text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 transition-all">
+                                <i data-lucide="list" class="w-3.5 h-3.5"></i> View all notifications
+                            </a>
+                        </div>
+                    </div>
+                </div>
                 <div class="flex items-center gap-3 pl-2 border-l border-gray-200">
                     <div class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-semibold text-xs">AD</div>
                     <div>
@@ -203,7 +241,7 @@
                         </div>
 
                         <!-- Reply Input Form Block -->
-                        <form action="{{ route('tickets.reply', 1001) }}" method="POST" class="p-4 border-t border-gray-100 bg-gray-50/50 space-y-3">
+                        <form action="{{ route('admin.support.tickets.reply', $ticket->id) }}" method="POST" class="...">
                             @csrf
                             <!-- Add this hidden input inside the agent form -->
     <input type="hidden" name="sender_type" value="Agent">
@@ -341,6 +379,21 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
+
+            // Notification dropdown toggle
+            const toggleBtn = document.getElementById('notiToggle');
+            const dropdown = document.getElementById('notiDropdown');
+            if (toggleBtn && dropdown) {
+                toggleBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    dropdown.classList.toggle('hidden');
+                });
+                document.addEventListener('click', (e) => {
+                    if (!dropdown.contains(e.target) && e.target !== toggleBtn) {
+                        dropdown.classList.add('hidden');
+                    }
+                });
+            }
         });
     </script>
 </body>
