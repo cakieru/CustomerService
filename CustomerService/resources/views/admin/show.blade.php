@@ -315,12 +315,12 @@
                                 <p class="text-xs text-gray-400">{{ $ticket->customer->email ?? 'N/A' }}</p>
                             </div>
                         </div>
-                        <button
-                            id="openCustomerProfile"
-                            type="button"
+                        <button id="openCustomerProfile"
                             class="block w-full text-center py-2 text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg active:scale-[0.98] transition-all">
-                            View Customer Profile
-                        </button>
+
+                                View Customer Profile
+
+                            </button>
                     </div>
 
                     <div class="animate-detail-reveal interactive-card bg-white border border-gray-200 rounded-xl p-5 shadow-sm space-y-4" style="--panel-index: 3;">
@@ -488,6 +488,30 @@
             </div>
         </main>
     </div>
+    
+  <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+
+            // Notification dropdown toggle
+            const toggleBtn = document.getElementById('notiToggle');
+            const dropdown = document.getElementById('notiDropdown');
+            if (toggleBtn && dropdown) {
+                toggleBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    dropdown.classList.toggle('hidden');
+                });
+                document.addEventListener('click', (e) => {
+                    if (!dropdown.contains(e.target) && e.target !== toggleBtn) {
+                        dropdown.classList.add('hidden');
+                    }
+                });
+            }
+        });
+
+    </script>
 
 <!-- Customer Profile Modal -->
 
