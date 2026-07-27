@@ -59,19 +59,11 @@
         </div>
     </header>
 
-    <main class="flex-1 max-w-5xl w-full mx-auto px-6 pt-1 pb-12 flex flex-col justify-between space-y-12">
-        @yield('content')
+    <main class="flex-1 max-w-6xl w-full mx-auto px-6 pt-6 pb-10">
+    @yield('content')
+</main>
 
-        <!-- Footer copied directly from CustomerPortal -->
-        <div class="flex items-center justify-between text-xs text-slate-400 border-t border-slate-200 pt-8 !mt-12">
-            <p>&copy; 2026 Support Center. All rights reserved.</p>
-            <div class="space-x-4">
-                <a href="{{ route('admin.support.dashboard') }}" class="hover:underline">Agent Portal</a>
-                <a href="#" class="hover:text-gray-600 transition">FAQ</a>
-                <a href="#" class="hover:text-gray-600 transition">Terms</a>
-            </div>
-        </div>
-    </main>
+   
 
 
     <footer class="bg-white border-t border-gray-200 py-6 px-8 flex justify-between items-center text-sm text-gray-500 mt-auto">
