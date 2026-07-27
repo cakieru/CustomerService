@@ -13,37 +13,38 @@ use App\Models\Order;
 
 class CustomerController extends Controller
 {
-   public function home()
-{
-    // Fetch articles the same way KnowledgeBaseController does for customer portal
-    $query = \Illuminate\Support\Facades\DB::table('kb_articles')
-        ->where('visibility', 'public');
-    
-    $dbArticles = $query->get();
-    $dbCategories = \Illuminate\Support\Facades\DB::table('article_categories')->get();
+    public function home()
+    {
+        // Fetch articles the same way KnowledgeBaseController does for customer portal
+        $query = \Illuminate\Support\Facades\DB::table('kb_articles')
+            ->where('visibility', 'public');
+        
+        $dbArticles = $query->get();
+        $dbCategories = \Illuminate\Support\Facades\DB::table('article_categories')->get();
 
-    // Format articles collection for the UI (same logic as KnowledgeBaseController)
-    $articles = $dbArticles->map(function($article) {
-        return [
-            'id' => $article->id,
-            'title' => $article->title,
-            'desc' => $article->desc,
-            'category' => $article->category,
-            'catId' => $article->cat_id,
-            'views' => number_format($article->views),
-            'updated' => \Carbon\Carbon::parse($article->updated_at)->format('m/d/Y'),
-            'helpful' => $article->yes_votes + $article->no_votes > 0 
-                ? round(($article->yes_votes / ($article->yes_votes + $article->no_votes)) * 100) . '%' 
-                : '100%',
-            'tags' => explode(',', $article->tags),
-            'yesVotes' => $article->yes_votes,
-            'noVotes' => $article->no_votes,
-            'visibility' => $article->visibility,
-        ];
-    });
+        // Format articles collection for the UI
+        $articles = $dbArticles->map(function($article) {
+            return [
+                'id' => $article->id,
+                'title' => $article->title,
+                'desc' => $article->desc,
+                'category' => $article->category,
+                'catId' => $article->cat_id,
+                'views' => number_format($article->views),
+                'updated' => \Carbon\Carbon::parse($article->updated_at)->format('m/d/Y'),
+                'helpful' => $article->yes_votes + $article->no_votes > 0 
+                    ? round(($article->yes_votes / ($article->yes_votes + $article->no_votes)) * 100) . '%' 
+                    : '100%',
+                'tags' => explode(',', $article->tags),
+                'yesVotes' => $article->yes_votes,
+                'noVotes' => $article->no_votes,
+                'visibility' => $article->visibility,
+            ];
+        });
 
-    return view('CustomerPortal', compact('articles'));
-}
+        return view('CustomerPortal', compact('articles'));
+    }
+
     public function index(Request $request)
     {
         $customerId = Session::get('customer_id');
@@ -68,7 +69,7 @@ class CustomerController extends Controller
     }
 
     /**
-     * 2. SHOW SINGLE TICKET DETAILS
+     * SHOW SINGLE TICKET DETAILS
      */
     public function show($id)
     {
@@ -83,19 +84,16 @@ class CustomerController extends Controller
     }
 
     /**
-     * 3. SHOW TICKET CREATION FORM
+     * SHOW TICKET CREATION FORM
      */
-   
-
     public function create()
     {
-        $orders = Order::all(); // later you can filter by logged in customer
-    
+        $orders = Order::all(); 
         return view('create', compact('orders'));
     }
 
     /**
-     * 4. SUBMIT AND SAVE NEW TICKET
+     * SUBMIT AND SAVE NEW TICKET
      */
     public function store(Request $request)
     {
@@ -115,7 +113,6 @@ class CustomerController extends Controller
 
         Session::put('customer_id', $user->id);
 
-        // Determine priority based on category or default
         $priority = 'low';
         $priorityLevel = 'Low';
 
@@ -140,7 +137,6 @@ class CustomerController extends Controller
             'due_date'         => Carbon::now()->addHours($hours),
         ]);
 
-        // Handle file attachments
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
                 $path = $file->store('ticket-attachments', 'public');
@@ -151,19 +147,15 @@ class CustomerController extends Controller
             }
         }
 
-        // Update SLA metrics after creating ticket
-        // Update SLA metrics
-try {
-    SlaCalculator::updateSlaData();
-} catch (\Exception $e) {
-    // SLA failed but reply was saved
-}
+        try {
+            SlaCalculator::updateSlaData();
+        } catch (\Exception $e) {}
 
         return redirect()->route('customer.tickets')->with('success', 'Ticket created successfully!');
     }
 
     /**
-     * 5. START LIVE CHAT LOGIC
+     * START LIVE CHAT LOGIC
      */
     public function startLiveChat(Request $request)
     {
@@ -201,7 +193,7 @@ try {
     }
 
     /**
-     * 6. SEND MESSAGE & AUTOMATIC BOT REPLY
+     * SEND MESSAGE & AUTOMATIC BOT REPLY
      */
     public function sendLiveChatMessage(Request $request)
     {
@@ -223,7 +215,8 @@ try {
             TicketReply::create([
                 'ticket_id' => $request->ticket_id,
                 'user_id'   => $admin->id,
-                'body'      => 'We are currently reviewing your ticket details. Please hold on for a moment while we connect you with a support specialist.'
+                'body'      => 'We are currently reviewing your ticket details. Please hold on for a moment while we connect you with a support specialist.',
+                'is_bot'    => true,
             ]);
         }
 
@@ -234,54 +227,58 @@ try {
      * SUBMIT TICKET REPLY (Customer)
      */
     public function reply(Request $request, Ticket $ticket)
-{
-    $request->validate([
-        'body' => 'required|string',
-    ]);
+    {
+        $request->validate([
+            'body' => 'required|string',
+        ]);
 
-    $customerId = Session::get('customer_id');
+        $customerId = Session::get('customer_id');
 
-    // If an admin is authenticated via normal Auth, don't impersonate the customer
-    if (!$customerId && auth()->check()) {
-        return redirect()
-            ->route('admin.support.tickets.show', $ticket)
-            ->with('error', 'Please use the admin ticket view to reply.');
+        if (!$customerId && auth()->check()) {
+            return redirect()
+                ->route('admin.support.tickets.show', $ticket)
+                ->with('error', 'Please use the admin ticket view to reply.');
+        }
+
+        if (!$customerId) {
+            return redirect()->route('login')->with('error', 'Please log in to reply.');
+        }
+
+        if ($ticket->user_id != $customerId) {
+            abort(403, 'Unauthorized access to this ticket.');
+        }
+
+        // Save Customer Reply
+        TicketReply::create([
+            'ticket_id' => $ticket->id,
+            'user_id'   => $customerId,
+            'body'      => $request->body,
+        ]);
+
+        $systemUserId = User::where('role', 'admin')->value('id') ?? $ticket->agent_id ?? $customerId;
+
+        // Save Automated System Reply
+        TicketReply::create([
+            'ticket_id' => $ticket->id,
+            'user_id'   => $systemUserId,
+            'body'      => "Thank you for reaching out! We have successfully received your reply for Ticket #{$ticket->ticket_reference}. An agent will review it shortly.",
+            'is_bot'    => true,
+        ]);
+
+        if (in_array($ticket->status, ['resolved', 'closed'])) {
+            $ticket->update(['status' => 'open']);
+        }
+
+        try {
+            SlaCalculator::updateSlaData();
+        } catch (\Exception $e) {}
+
+        return back()->with('success', 'Your reply has been sent.');
     }
 
-    if (!$customerId) {
-        return redirect()->route('login')->with('error', 'Please log in to reply.');
-    }
-
-    if ($ticket->user_id != $customerId) {
-        abort(403, 'Unauthorized access to this ticket.');
-    }
-
-    TicketReply::create([
-        'ticket_id' => $ticket->id,
-        'user_id'   => $customerId,
-        'body'      => $request->body,
-    ]);
-
-    $systemUserId = User::where('role', 'admin')->value('id') ?? $ticket->agent_id ?? $customerId;
-
-    TicketReply::create([
-        'ticket_id' => $ticket->id,
-        'user_id'   => $systemUserId,
-        'body'      => "Thank you for reaching out! We have successfully received your reply for Ticket #{$ticket->ticket_reference}. An agent will review it shortly.",
-        'is_bot'    => true,
-    ]);
-
-    if (in_array($ticket->status, ['resolved', 'closed'])) {
-        $ticket->update(['status' => 'open']);
-    }
-
-    try {
-        SlaCalculator::updateSlaData();
-    } catch (\Exception $e) {}
-
-    return back()->with('success', 'Your reply has been sent.');
-}
-
+    /**
+     * RENDER CUSTOMER TICKET THREAD
+     */
     public function customerTicket($id)
     {
         $ticket = Ticket::findOrFail($id);
@@ -291,7 +288,6 @@ try {
             abort(403);
         }
 
-        // Use ticket owner as fallback if session is missing
         $customerId = $customerId ?? $ticket->user_id;
 
         $replies = \DB::table('ticket_replies')
@@ -301,8 +297,10 @@ try {
             ->map(function($reply) use ($customerId) {
                 $user = User::find($reply->user_id);
                 
-                // Detect the automated system reply by its content
-                $isSystem = str_contains($reply->body, 'Thank you for reaching out! We have successfully received your reply');
+                // FIXED: Enhanced Bot / System Detection
+                $isSystem = (isset($reply->is_bot) && $reply->is_bot)
+                    || str_contains($reply->body, 'Thank you for reaching out!')
+                    || str_contains($reply->body, 'An agent will review it shortly');
                 
                 if ($isSystem) {
                     return (object) [
@@ -317,7 +315,7 @@ try {
                 
                 return (object) [
                     'sender'    => $isCustomer ? 'Customer' : 'Agent',
-                    'user_name' => $isCustomer ? ($user?->name ?? 'You') : ($user?->name ?? 'Support Agent'),
+                    'user_name' => $isCustomer ? ($user?->name ?? 'You') : ($user?->name ?? 'Admin User'),
                     'sent_at'   => $reply->created_at,
                     'message'   => $reply->body,
                 ];

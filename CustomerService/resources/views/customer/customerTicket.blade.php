@@ -124,81 +124,80 @@
                         </div>
                     </div>
 
-                    <!-- Original Ticket Message -->
-                    <div class="animate-reveal-card bg-white border border-gray-200/90 rounded-3xl shadow-[0_2px_12px_rgba(0,0,0,0.01)] overflow-hidden" style="--card-index: 2;">
-                        <div class="bg-gray-50/70 px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                            <div class="flex items-center gap-3">
-                                <div class="w-9 h-9 bg-blue-100 text-[#0f62fe] font-bold text-xs rounded-full flex items-center justify-center shadow-inner">
-                                    {{ collect(explode(' ', auth()->user()->name ?? 'You'))->map(fn($n) => strtoupper(substr($n, 0, 1)))->join('') }}
+                    <!-- Conversation Thread Box -->
+                    <div class="animate-reveal-card bg-white border border-gray-200/90 rounded-3xl p-6 shadow-[0_2px_12px_rgba(0,0,0,0.01)] space-y-6" style="--card-index: 2;">
+                        
+                        <h3 class="text-base font-bold text-gray-900 border-b border-gray-100 pb-3">Conversation</h3>
+
+                        {{-- 1. Initial Ticket Request Message --}}
+                        <div class="flex gap-4">
+                            <div class="w-9 h-9 bg-blue-100 text-[#0f62fe] font-bold text-xs rounded-full flex items-center justify-center shadow-inner flex-shrink-0">
+                                {{ collect(explode(' ', auth()->user()->name ?? $ticket->customer_name ?? 'You'))->map(fn($n) => strtoupper(substr($n, 0, 1)))->join('') }}
+                            </div>
+                            <div class="space-y-1 flex-1 max-w-[80%]">
+                                <div class="flex items-baseline gap-2 justify-start">
+                                    <h5 class="font-semibold text-sm text-gray-900">{{ auth()->user()->name ?? $ticket->customer_name ?? 'You' }}</h5>
+                                    <span class="text-xs text-gray-400">— You</span>
+                                    <span class="text-xs text-gray-400">{{ $ticket->created_at ? $ticket->created_at->format('M d, Y, g:i A') : '' }}</span>
                                 </div>
-                                <div>
-                                    <h4 class="font-bold text-sm text-gray-900 flex items-center gap-2">
-                                        {{ auth()->user()->name ?? 'You' }} 
-                                        <span class="text-gray-400 font-medium text-xs">— You</span>
-                                    </h4>
+                                <div class="inline-block p-3 px-4 rounded-2xl text-sm leading-relaxed text-left bg-gray-100 text-gray-800 border border-gray-100">
+                                    {{ $ticket->description ?? $ticket->message ?? 'No description provided.' }}
                                 </div>
                             </div>
-                            <span class="text-xs text-gray-400 font-medium">{{ $ticket->created_at ? $ticket->created_at->format('F d, Y, g:i A') : '' }}</span>
                         </div>
-                        <div class="p-6 text-sm text-gray-600 leading-relaxed font-normal whitespace-pre-wrap">{{ $ticket->description ?? $ticket->message ?? 'No description provided.' }}</div>
+
+                        {{-- 2. Replies Loop --}}
+                        @forelse($replies as $index => $msg)
+                            
+                            {{-- System Bot Message --}}
+                            @if($msg->sender == 'System' || str_contains($msg->message, 'Thank you for reaching out!'))
+                                <div class="flex justify-center my-4">
+                                    <div class="flex items-center gap-2 bg-gray-100/80 border border-gray-200/60 text-gray-500 text-xs px-4 py-2 rounded-full shadow-sm">
+                                        <i data-lucide="bot" class="w-3.5 h-3.5 text-gray-400"></i>
+                                        <span>{{ $msg->message }}</span>
+                                    </div>
+                                </div>
+
+                            {{-- Customer Message --}}
+                            @elseif($msg->sender == 'Customer')
+                                <div class="flex gap-4">
+                                    <div class="w-9 h-9 bg-blue-100 text-[#0f62fe] font-bold text-xs rounded-full flex items-center justify-center shadow-inner flex-shrink-0">
+                                        {{ collect(explode(' ', $msg->user_name ?? 'You'))->map(fn($n) => strtoupper(substr($n, 0, 1)))->join('') }}
+                                    </div>
+                                    <div class="space-y-1 flex-1 max-w-[80%]">
+                                        <div class="flex items-baseline gap-2 justify-start">
+                                            <h5 class="font-semibold text-sm text-gray-900">{{ $msg->user_name ?? 'You' }}</h5>
+                                            <span class="text-xs text-gray-400">{{ \Carbon\Carbon::parse($msg->sent_at)->format('M d, Y, g:i A') }}</span>
+                                        </div>
+                                        <div class="inline-block p-3 px-4 rounded-2xl text-sm leading-relaxed text-left bg-gray-100 text-gray-800 border border-gray-100">
+                                            {{ $msg->message }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                            {{-- Admin / Agent Reply --}}
+                            @else
+                                <div class="flex gap-4 flex-row-reverse">
+                                    <div class="w-9 h-9 bg-blue-600 text-white font-bold text-xs rounded-full flex items-center justify-center shadow-md flex-shrink-0">
+                                        {{ collect(explode(' ', $msg->user_name ?? 'Admin User'))->map(fn($n) => strtoupper(substr($n, 0, 1)))->join('') }}
+                                    </div>
+                                    <div class="space-y-1 flex-1 max-w-[80%] text-right">
+                                        <div class="flex items-baseline gap-2 justify-end">
+                                            <span class="text-xs text-gray-400">{{ \Carbon\Carbon::parse($msg->sent_at)->format('g:i A') }}</span>
+                                            <h5 class="font-semibold text-sm text-gray-900">{{ $msg->user_name ?? 'Admin User' }}</h5>
+                                            <span class="text-[10px] font-bold bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">Admin</span>
+                                        </div>
+                                        <div class="inline-block p-3 px-4 rounded-2xl text-sm leading-relaxed text-left bg-blue-600 text-white border border-blue-700">
+                                            {{ $msg->message }}
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
+                        @empty
+                        @endforelse
+
                     </div>
 
-                    <!-- Conversation Thread (moved UP before reply form) -->
-                    <div class="space-y-6">
-    @forelse($replies as $index => $msg)
-        @if($msg->sender == 'System')
-            <div class="flex justify-center animate-reveal-card" style="--card-index: {{ $index + 3 }};">
-                <span class="text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full">
-                    {{ $msg->message }}
-                </span>
-            </div>
-        @elseif($msg->sender == 'Customer')
-            <div class="flex gap-4 animate-reveal-card" style="--card-index: {{ $index + 3 }};">
-                <div class="w-9 h-9 bg-blue-100 text-[#0f62fe] font-bold text-xs rounded-full flex items-center justify-center shadow-inner flex-shrink-0">
-                    {{ collect(explode(' ', $msg->user_name ?? 'You'))->map(fn($n) => strtoupper(substr($n, 0, 1)))->join('') }}
-                </div>
-                <div class="space-y-1 flex-1 max-w-[80%]">
-                    <div class="flex items-baseline gap-2 justify-start">
-                        <h5 class="font-semibold text-sm text-gray-900">{{ $msg->user_name ?? 'You' }}</h5>
-                        <span class="text-xs text-gray-400">{{ \Carbon\Carbon::parse($msg->sent_at)->format('M d, Y, g:i A') }}</span>
-                    </div>
-                    <div class="inline-block p-4 rounded-2xl text-sm leading-relaxed text-left shadow-sm bg-gray-50 text-gray-700 border border-gray-100">
-                        {{ $msg->message }}
-                    </div>
-                </div>
-            </div>
-        @else
-            {{-- Agent / Admin --}}
-            <div class="flex gap-4 flex-row-reverse animate-reveal-card" style="--card-index: {{ $index + 3 }};">
-                <div class="w-9 h-9 bg-purple-100 text-purple-700 font-bold text-xs rounded-full flex items-center justify-center shadow-inner flex-shrink-0">
-                    {{ collect(explode(' ', $msg->user_name ?? 'Agent'))->map(fn($n) => strtoupper(substr($n, 0, 1)))->join('') }}
-                </div>
-                <div class="space-y-1 flex-1 max-w-[80%] text-right">
-                    <div class="flex items-baseline gap-2 justify-end">
-                        <span class="text-xs text-gray-400">{{ \Carbon\Carbon::parse($msg->sent_at)->format('M d, Y, g:i A') }}</span>
-                        <h5 class="font-semibold text-sm text-gray-900">{{ $msg->user_name ?? 'Support Agent' }}</h5>
-                        <span class="text-[10px] font-bold bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">Agent</span>
-                    </div>
-                    <div class="inline-block p-4 rounded-2xl text-sm leading-relaxed text-left shadow-sm bg-blue-600 text-white border border-blue-700">
-                        {{ $msg->message }}
-                    </div>
-                </div>
-            </div>
-        @endif
-    @empty
-        <div class="animate-reveal-card bg-white border border-gray-200/90 rounded-3xl p-10 shadow-[0_2px_12px_rgba(0,0,0,0.01)] flex flex-col items-center justify-center text-center space-y-4" style="--card-index: 3;">
-            <div class="w-12 h-12 bg-gray-50 text-gray-400 border border-gray-100 rounded-full flex items-center justify-center shadow-sm">
-                <i data-lucide="clock" class="w-6 h-6 stroke-[1.5]"></i>
-            </div>
-            <div>
-                <p class="font-bold text-sm text-gray-800">No replies yet - our team is reviewing your request.</p>
-                <p class="text-xs text-gray-400 mt-1">You'll receive an email when we respond.</p>
-            </div>
-        </div>
-    @endforelse
-</div>
-
-                    <!-- Reply Form (moved DOWN to bottom) -->
                     <!-- Reply Form -->
                     <div class="animate-reveal-card bg-white border border-gray-200 rounded-3xl p-6 shadow-sm space-y-4" style="--card-index: {{ count($replies) + 3 }};">
                         <h3 class="text-lg font-bold text-gray-900">Add a reply</h3>
@@ -363,13 +362,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             if (window.lucide) lucide.createIcons();
         });
-    </script>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            if (window.lucide) lucide.createIcons();
-        });
-        
         function handleFileSelect(input) {
             const count = input.files.length;
             const label = document.getElementById('attachLabel');

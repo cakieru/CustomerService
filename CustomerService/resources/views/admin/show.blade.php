@@ -230,35 +230,55 @@
                         <div class="p-6 space-y-6 flex flex-col gap-4">
                             @forelse($ticket->replies as $reply)
                                 @php
-                                    $isAdmin = $reply->user && $reply->user->role === 'admin';
-                                    $isSystem = $reply->sender === 'System' || !$reply->user;
-                                    $isCurrentUser = $reply->user_id == auth()->id();
-                                    $displayName = $reply->user->name ?? $reply->sender ?? 'Unknown';
+                                    $isAgent = ($reply->user && in_array($reply->user->role, ['admin', 'agent'])) || $reply->sender === 'Agent' || $reply->sender === 'Admin';
+                                    $isSystem = $reply->sender === 'System' || !$reply->user || str_contains($reply->body ?? $reply->message ?? '', 'Thank you for reaching out!');
+                                    $displayName = $reply->user->name ?? $reply->sender ?? 'User';
                                 @endphp
 
+                                {{-- Automated / System Bot Message (Centered Pill with Robot) --}}
                                 @if($isSystem)
-                                    <div class="flex justify-center">
-                                        <span class="text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full">
-                                            {{ $reply->body }}
-                                        </span>
+                                    <div class="flex justify-center my-2">
+                                        <div class="flex items-center gap-2 bg-gray-100/80 border border-gray-200/60 text-gray-500 text-xs px-4 py-2 rounded-full shadow-sm">
+                                            <i data-lucide="bot" class="w-4 h-4 text-gray-400"></i>
+                                            <span>{{ $reply->body ?? $reply->message }}</span>
+                                        </div>
                                     </div>
-                                @else
-                                    <div class="flex gap-4 {{ $isAdmin ? 'flex-row-reverse' : '' }}">
-                                        <div class="w-9 h-9 {{ $isAdmin ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700' }} font-semibold rounded-full flex-shrink-0 flex items-center justify-center text-xs shadow-sm">
+
+                                {{-- Agent Reply (Right Side) --}}
+                                @elseif($isAgent)
+                                    <div class="flex gap-4 flex-row-reverse">
+                                        <div class="w-9 h-9 bg-blue-600 text-white font-bold text-xs rounded-full flex-shrink-0 flex items-center justify-center shadow-md">
                                             {{ strtoupper(substr($displayName, 0, 2)) }}
                                         </div>
 
-                                        <div class="space-y-1 flex-1 max-w-[80%] {{ $isAdmin ? 'text-right' : '' }}">
-                                            <div class="flex items-baseline gap-2 {{ $isAdmin ? 'justify-end' : 'justify-start' }}">
+                                        <div class="space-y-1 flex-1 max-w-[80%] text-right">
+                                            <div class="flex items-baseline gap-2 justify-end">
+                                                <span class="text-xs text-gray-400">{{ $reply->created_at ? $reply->created_at->format('g:i A') : '' }}</span>
                                                 <h5 class="font-semibold text-sm text-gray-900">{{ $displayName }}</h5>
-                                                @if($isAdmin)
-                                                    <span class="text-[10px] font-bold bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">Admin</span>
-                                                @endif
-                                                <span class="text-xs text-gray-400">{{ $reply->created_at->diffForHumans() }}</span>
+                                                <span class="text-[10px] font-bold bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">Agent</span>
                                             </div>
 
-                                            <div class="inline-block p-4 rounded-xl text-sm leading-relaxed text-left shadow-sm {{ $isAdmin ? 'bg-blue-600 text-white border border-blue-700' : 'bg-gray-50 text-gray-700 border border-gray-100' }}">
-                                                {{ $reply->body }}
+                                            <div class="inline-block p-4 rounded-2xl text-sm leading-relaxed text-left shadow-sm bg-blue-600 text-white border border-blue-700">
+                                                {{ $reply->body ?? $reply->message }}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                {{-- Customer Reply (Left Side) --}}
+                                @else
+                                    <div class="flex gap-4">
+                                        <div class="w-9 h-9 bg-gray-200 text-gray-700 font-bold text-xs rounded-full flex-shrink-0 flex items-center justify-center shadow-sm">
+                                            {{ strtoupper(substr($displayName, 0, 2)) }}
+                                        </div>
+
+                                        <div class="space-y-1 flex-1 max-w-[80%]">
+                                            <div class="flex items-baseline gap-2 justify-start">
+                                                <h5 class="font-semibold text-sm text-gray-900">{{ $displayName }}</h5>
+                                                <span class="text-xs text-gray-400">{{ $reply->created_at ? $reply->created_at->format('M d, Y, g:i A') : '' }}</span>
+                                            </div>
+
+                                            <div class="inline-block p-4 rounded-2xl text-sm leading-relaxed text-left shadow-sm bg-gray-50 text-gray-700 border border-gray-100">
+                                                {{ $reply->body ?? $reply->message }}
                                             </div>
                                         </div>
                                     </div>
