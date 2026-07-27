@@ -20,7 +20,7 @@ class AdminController extends Controller
         try {
             SlaCalculator::updateSlaData();
         } catch (\Exception $e) {
-            \Log::error('SLA Update failed on dashboard: ' . $e->getMessage());
+            Log::error('SLA Update failed on dashboard: ' . $e->getMessage());
         }
 
         $summary = [
@@ -151,7 +151,7 @@ class AdminController extends Controller
         try {
             SlaCalculator::updateSlaData();
         } catch (\Exception $e) {
-            \Log::error('SLA Update failed: ' . $e->getMessage());
+            Log::error('SLA Update failed: ' . $e->getMessage());
         }
 
         return back()->with('success', 'Ticket status updated successfully.');
@@ -177,16 +177,23 @@ class AdminController extends Controller
 
     /**
      * Post a reply to the ticket
-     * FIXED: Sets resolved_at when resolve_ticket checkbox is checked
+     * FIXED: Replaced hardcoded default user_id with fallback resolution to prevent FK constraint failures
      */
     public function reply(Request $request, Ticket $ticket)
     {
         $request->validate(['body' => 'required|string']);
 
+        // Dynamically resolve valid user_id: Auth user -> Ticket Agent -> Ticket Customer
+        $userId = Auth::id() ?? $ticket->agent_id ?? $ticket->user_id;
+
+        if (!$userId) {
+            return back()->withErrors(['body' => 'Unable to determine the replying user account.']);
+        }
+
         TicketReply::create([
             'ticket_id' => $ticket->id,
-            'user_id' => Auth::id() ?? 1, 
-            'body' => $request->body,
+            'user_id'   => $userId,
+            'body'      => $request->body,
         ]);
 
         $updateData = [];
@@ -212,7 +219,7 @@ class AdminController extends Controller
         try {
             SlaCalculator::updateSlaData();
         } catch (\Exception $e) {
-            \Log::error('SLA Update failed: ' . $e->getMessage());
+            Log::error('SLA Update failed: ' . $e->getMessage());
         }
 
         return redirect()
@@ -234,7 +241,7 @@ class AdminController extends Controller
         try {
             SlaCalculator::updateSlaData();
         } catch (\Exception $e) {
-            \Log::error('SLA Update failed after resolve: ' . $e->getMessage());
+            Log::error('SLA Update failed after resolve: ' . $e->getMessage());
         }
 
         return redirect()
@@ -257,7 +264,7 @@ class AdminController extends Controller
         try {
             SlaCalculator::updateSlaData();
         } catch (\Exception $e) {
-            \Log::error('SLA Update failed after close: ' . $e->getMessage());
+            Log::error('SLA Update failed after close: ' . $e->getMessage());
         }
 
         return redirect()
@@ -291,7 +298,7 @@ class AdminController extends Controller
         try {
             SlaCalculator::updateSlaData();
         } catch (\Exception $e) {
-            \Log::error('SLA Update failed on reports: ' . $e->getMessage());
+            Log::error('SLA Update failed on reports: ' . $e->getMessage());
         }
 
         $totalResolved = Ticket::where('status', 'resolved')->count();
@@ -313,7 +320,7 @@ class AdminController extends Controller
             'agent_id' => 'nullable|exists:users,id'
         ]);
 
-        $ticket = \App\Models\Ticket::findOrFail($ticket);
+        $ticket = Ticket::findOrFail($ticket);
         $ticket->update([
             'agent_id' => $request->agent_id
         ]);
@@ -368,7 +375,7 @@ class AdminController extends Controller
         try {
             SlaCalculator::updateSlaData();
         } catch (\Exception $e) {
-            \Log::error('SLA Update failed after priority change: ' . $e->getMessage());
+            Log::error('SLA Update failed after priority change: ' . $e->getMessage());
         }
 
         return back()->with('success', "Priority updated to {$priorityLevel}. Due date set to " . now()->addHours($hours)->format('M d, Y g:i A') . ".");
