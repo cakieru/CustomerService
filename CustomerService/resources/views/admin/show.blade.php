@@ -315,9 +315,12 @@
                                 <p class="text-xs text-gray-400">{{ $ticket->customer->email ?? 'N/A' }}</p>
                             </div>
                         </div>
-                        <a href="{{ route('admin.customers.show', $ticket->user_id) }}" class="block w-full text-center py-2 text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg active:scale-[0.98] transition-all">
+                        <button
+                            id="openCustomerProfile"
+                            type="button"
+                            class="block w-full text-center py-2 text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg active:scale-[0.98] transition-all">
                             View Customer Profile
-                        </a>
+                        </button>
                     </div>
 
                     <div class="animate-detail-reveal interactive-card bg-white border border-gray-200 rounded-xl p-5 shadow-sm space-y-4" style="--panel-index: 3;">
@@ -331,14 +334,14 @@
                             <div>
                                 <label class="text-[11px] font-semibold uppercase tracking-wider text-gray-400 block mb-1">Assign to Agent</label>
                                 <div class="flex gap-2">
-                                    <select name="agent_id" class="w-full text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer">
-                                        <option value="">-- Unassigned --</option>
-                                        @foreach(\App\Models\User::where('role', 'admin')->orderBy('name')->get() as $agent)
-                                            <option value="{{ $agent->id }}" {{ $ticket->agent_id == $agent->id ? 'selected' : '' }}>
-                                                {{ $agent->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
+                                <select name="agent_id" class="w-full text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer">
+                                    <option value="">-- Unassigned --</option>
+                                    @foreach(\App\Models\User::where('role', 'agent')->get() as $agent)
+                                        <option value="{{ $agent->id }}" {{ $ticket->agent_id == $agent->id ? 'selected' : '' }}>
+                                            {{ $agent->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
                                     <button type="submit" class="px-3 py-1.5 text-xs font-medium text-blue-600 border border-blue-200 hover:bg-blue-50 rounded-lg transition-colors">
                                         Save
                                     </button>
@@ -486,27 +489,156 @@
         </main>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            if (typeof lucide !== 'undefined') {
-                lucide.createIcons();
-            }
+<!-- Customer Profile Modal -->
 
-            // Notification dropdown toggle
-            const toggleBtn = document.getElementById('notiToggle');
-            const dropdown = document.getElementById('notiDropdown');
-            if (toggleBtn && dropdown) {
-                toggleBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    dropdown.classList.toggle('hidden');
-                });
-                document.addEventListener('click', (e) => {
-                    if (!dropdown.contains(e.target) && e.target !== toggleBtn) {
-                        dropdown.classList.add('hidden');
-                    }
-                });
-            }
-        });
-    </script>
+<div id="customerModal"
+    class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden items-center justify-center z-[9999]">
+
+    <div id="customerCard"
+        class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 transform scale-95 opacity-0 transition-all duration-300">
+
+        <div class="flex justify-between items-center border-b p-6">
+
+            <div class="flex items-center gap-4">
+
+                <div class="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center text-xl font-bold">
+                    PD
+                </div>
+
+                <div>
+
+                    <h2 class="text-2xl font-bold">
+                        Panda Decoco
+                    </h2>
+
+                    <p class="text-gray-400">
+                        Customer Profile
+                    </p>
+
+                </div>
+
+            </div>
+
+            <button
+                id="closeCustomerProfile"
+                type="button"
+                class="w-10 h-10 rounded-full hover:bg-gray-100 transition">
+
+                ✕
+
+            </button>
+
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-5 p-6">
+
+            <div class="border rounded-xl p-5">
+                <p class="text-xs text-gray-400 uppercase">First Name</p>
+                <h3 class="font-semibold mt-1">Panda</h3>
+            </div>
+
+            <div class="border rounded-xl p-5">
+                <p class="text-xs text-gray-400 uppercase">Last Name</p>
+                <h3 class="font-semibold mt-1">Decoco</h3>
+            </div>
+
+            <div class="border rounded-xl p-5">
+                <p class="text-xs text-gray-400 uppercase">Email</p>
+                <h3 class="font-semibold mt-1">panda@gmail.com</h3>
+            </div>
+
+            <div class="border rounded-xl p-5">
+                <p class="text-xs text-gray-400 uppercase">Phone Number</p>
+                <h3 class="font-semibold mt-1">09658852674</h3>
+            </div>
+
+            <div class="border rounded-xl p-5">
+                <p class="text-xs text-gray-400 uppercase">Member Since</p>
+                <h3 class="font-semibold mt-1">Jul 26, 2026</h3>
+            </div>
+
+            <div class="border rounded-xl p-5">
+                <p class="text-xs text-gray-400 uppercase">Verification</p>
+
+                <span class="inline-flex items-center rounded-full bg-green-100 text-green-700 px-4 py-2 mt-2">
+
+                    ✔ Verified
+
+                </span>
+
+            </div>
+
+        </div>
+
+        <div class="border-t p-5 flex justify-end">
+
+            <button
+                id="closeCustomerProfile2"
+                type="button"
+                class="px-5 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">
+
+                Close
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const openBtn = document.getElementById("openCustomerProfile");
+    const closeBtn = document.getElementById("closeCustomerProfile");
+    const closeBtn2 = document.getElementById("closeCustomerProfile2");
+    const modal = document.getElementById("customerModal");
+    const card = document.getElementById("customerCard");
+
+    if (!openBtn || !modal || !card) return;
+
+    function openCustomerModal() {
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+
+        setTimeout(() => {
+            card.classList.remove("opacity-0", "scale-95");
+            card.classList.add("opacity-100", "scale-100");
+        }, 10);
+    }
+
+    function closeCustomerModal() {
+        card.classList.remove("opacity-100", "scale-100");
+        card.classList.add("opacity-0", "scale-95");
+
+        setTimeout(() => {
+            modal.classList.remove("flex");
+            modal.classList.add("hidden");
+        }, 250);
+    }
+
+    openBtn.addEventListener("click", openCustomerModal);
+
+    if (closeBtn)
+        closeBtn.addEventListener("click", closeCustomerModal);
+
+    if (closeBtn2)
+        closeBtn2.addEventListener("click", closeCustomerModal);
+
+    modal.addEventListener("click", function (e) {
+        if (e.target === modal) {
+            closeCustomerModal();
+        }
+    });
+
+    document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" && !modal.classList.contains("hidden")) {
+            closeCustomerModal();
+        }
+    });
+
+});
+</script>
 </body>
 </html>

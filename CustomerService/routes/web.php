@@ -114,3 +114,8 @@ Route::post('/tickets/{ticket}/priority', [AdminController::class, 'updatePriori
 
 #for SLA API
 Route::post('/sla-reports/send', [SlaReportController::class, 'sendToDepartments'])->name('sla-reports.send');
+
+//for additional pages
+Route::get('/ecommerce', function () {
+    return view('eCommerce');
+});
