@@ -119,3 +119,4 @@ Route::post('/sla-reports/send', [SlaReportController::class, 'sendToDepartments
 Route::get('/ecommerce', function () {
     return view('eCommerce');
 });
+

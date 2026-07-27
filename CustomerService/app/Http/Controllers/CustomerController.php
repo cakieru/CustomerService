@@ -86,29 +86,28 @@ class CustomerController extends Controller
     /**
      * SHOW TICKET CREATION FORM
      */
-    public function create()
-    {
-        $orders = Order::all(); 
-        return view('create', compact('orders'));
-    }
+   public function create()
+   {
+       $orders = \App\Models\Order::all();
+       return view('customer.create', compact('orders'));
+   }
 
-    /**
-     * SUBMIT AND SAVE NEW TICKET
-     */
-    public function store(Request $request)
+   public function store(Request $request)
     {
         $request->validate([
-            'name'        => 'required|string|max:255',
-            'email'       => 'required|email|max:255',
-            'category'    => 'required|string',
-            'subject'     => 'required|string|max:255',
-            'description' => 'required|string',
+            'order_number'  => 'nullable|string|max:255',
+            'category'      => 'required|string',
+            'subject'       => 'required|string|max:255',
+            'description'   => 'required|string',
             'attachments.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:10240',
         ]);
 
+        $customerEmail = $request->input('email', 'guest_' . time() . '@example.com');
+        $customerName  = $request->input('name', 'Customer (' . ($request->order_number ?? 'Guest') . ')');
+
         $user = User::firstOrCreate(
-            ['email' => $request->email],
-            ['name' => $request->name, 'password' => bcrypt('password')]
+            ['email' => $customerEmail],
+            ['name' => $customerName, 'password' => bcrypt('password')]
         );
 
         Session::put('customer_id', $user->id);
@@ -126,7 +125,7 @@ class CustomerController extends Controller
         $ticket = Ticket::create([
             'ticket_reference' => 'TKT-' . rand(1000, 9999),
             'user_id'          => $user->id,
-            'customer_name'    => $request->name,
+            'customer_name'    => $customerName,
             'subject'          => $request->subject,
             'description'      => $request->description,
             'issue_description'=> $request->description,
@@ -152,7 +151,7 @@ class CustomerController extends Controller
         } catch (\Exception $e) {}
 
         return redirect()->route('customer.tickets')->with('success', 'Ticket created successfully!');
-    }
+    } // <--- MAKE SURE THIS CLOSING BRACE IS HERE!
 
     /**
      * START LIVE CHAT LOGIC

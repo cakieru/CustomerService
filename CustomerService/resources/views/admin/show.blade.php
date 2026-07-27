@@ -228,69 +228,91 @@
                         </div>
 
                         <div class="p-6 space-y-6 flex flex-col gap-4">
-                            @forelse($ticket->replies as $reply)
-                                @php
-                                    $isAgent = ($reply->user && in_array($reply->user->role, ['admin', 'agent'])) || $reply->sender === 'Agent' || $reply->sender === 'Admin';
-                                    $isSystem = $reply->sender === 'System' || !$reply->user || str_contains($reply->body ?? $reply->message ?? '', 'Thank you for reaching out!');
-                                    $displayName = $reply->user->name ?? $reply->sender ?? 'User';
-                                @endphp
+                        @forelse($ticket->replies as $reply)
+    @php
+        $bodyText = $reply->body ?? $reply->message ?? '';
+        $sender = $reply->sender ?? '';
+        $userName = $reply->user->name ?? '';
 
-                                {{-- Automated / System Bot Message (Centered Pill with Robot) --}}
-                                @if($isSystem)
-                                    <div class="flex justify-center my-2">
-                                        <div class="flex items-center gap-2 bg-gray-100/80 border border-gray-200/60 text-gray-500 text-xs px-4 py-2 rounded-full shadow-sm">
-                                            <i data-lucide="bot" class="w-4 h-4 text-gray-400"></i>
-                                            <span>{{ $reply->body ?? $reply->message }}</span>
-                                        </div>
-                                    </div>
+        // 1. IS THIS A SYSTEM BOT / AUTOMATED REPLY?
+        // It's a bot if sender is 'System', or name is 'Admin User' paired with auto-reply text, or contains auto-reply phrase
+        $isBot = $sender === 'System' 
+              || str_contains($bodyText, 'Thank you for reaching out!')
+              || str_contains($bodyText, 'An agent will review it shortly')
+              || ($userName === 'Admin User' && str_contains($bodyText, 'successfully received'));
 
-                                {{-- Agent Reply (Right Side) --}}
-                                @elseif($isAgent)
-                                    <div class="flex gap-4 flex-row-reverse">
-                                        <div class="w-9 h-9 bg-blue-600 text-white font-bold text-xs rounded-full flex-shrink-0 flex items-center justify-center shadow-md">
-                                            {{ strtoupper(substr($displayName, 0, 2)) }}
-                                        </div>
+        // 2. IS THIS A CUSTOMER?
+        $role = strtolower($reply->user->role ?? '');
+        $isCustomer = !$isBot && ($role === 'customer' || $sender === 'Customer');
 
-                                        <div class="space-y-1 flex-1 max-w-[80%] text-right">
-                                            <div class="flex items-baseline gap-2 justify-end">
-                                                <span class="text-xs text-gray-400">{{ $reply->created_at ? $reply->created_at->format('g:i A') : '' }}</span>
-                                                <h5 class="font-semibold text-sm text-gray-900">{{ $displayName }}</h5>
-                                                <span class="text-[10px] font-bold bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">Agent</span>
-                                            </div>
+        // Name and Initials formatting
+        $displayName = $userName ?: ($sender ?: 'User');
+        $words = explode(' ', trim($displayName));
+        $initials = '';
+        foreach ($words as $w) {
+            $initials .= strtoupper($w[0] ?? '');
+        }
+        $initials = substr($initials, 0, 3);
+    @endphp
 
-                                            <div class="inline-block p-4 rounded-2xl text-sm leading-relaxed text-left shadow-sm bg-blue-600 text-white border border-blue-700">
-                                                {{ $reply->body ?? $reply->message }}
-                                            </div>
-                                        </div>
-                                    </div>
+    {{-- 1. BOT / AUTOMATED SYSTEM MESSAGE (Centered capsule with robot icon) --}}
+    @if($isBot)
+        <div class="flex justify-center my-4">
+            <div class="flex items-center gap-2.5 bg-gray-100/90 border border-gray-200/80 text-gray-500 text-xs px-5 py-2.5 rounded-full shadow-sm max-w-2xl">
+                <i data-lucide="bot" class="w-4 h-4 text-gray-400 flex-shrink-0"></i>
+                <span class="font-normal">{{ $bodyText }}</span>
+            </div>
+        </div>
 
-                                {{-- Customer Reply (Left Side) --}}
-                                @else
-                                    <div class="flex gap-4">
-                                        <div class="w-9 h-9 bg-gray-200 text-gray-700 font-bold text-xs rounded-full flex-shrink-0 flex items-center justify-center shadow-sm">
-                                            {{ strtoupper(substr($displayName, 0, 2)) }}
-                                        </div>
+    {{-- 2. CUSTOMER REPLIES (Left Side / Gray) --}}
+    @elseif($isCustomer)
+        <div class="flex gap-3 items-start my-3">
+            <div class="w-9 h-9 bg-blue-100 text-blue-600 font-bold text-xs rounded-full flex-shrink-0 flex items-center justify-center shadow-sm">
+                {{ substr($initials, 0, 2) }}
+            </div>
 
-                                        <div class="space-y-1 flex-1 max-w-[80%]">
-                                            <div class="flex items-baseline gap-2 justify-start">
-                                                <h5 class="font-semibold text-sm text-gray-900">{{ $displayName }}</h5>
-                                                <span class="text-xs text-gray-400">{{ $reply->created_at ? $reply->created_at->format('M d, Y, g:i A') : '' }}</span>
-                                            </div>
+            <div class="space-y-1 flex-1 max-w-[80%]">
+                <div class="flex items-baseline gap-2 justify-start">
+                    <h5 class="font-semibold text-sm text-gray-900">{{ $displayName }}</h5>
+                    <span class="text-xs text-gray-400">{{ $reply->created_at ? \Carbon\Carbon::parse($reply->created_at)->format('M d, Y, g:i A') : '' }}</span>
+                </div>
 
-                                            <div class="inline-block p-4 rounded-2xl text-sm leading-relaxed text-left shadow-sm bg-gray-50 text-gray-700 border border-gray-100">
-                                                {{ $reply->body ?? $reply->message }}
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endif
-                            @empty
-                                <div class="text-center text-gray-400 py-8">
-                                    <i data-lucide="inbox" class="w-8 h-8 mx-auto stroke-1 mb-2"></i>
-                                    <p class="text-sm">No replies yet. Be the first to respond!</p>
+                <div class="inline-block p-3.5 px-4 rounded-2xl text-sm leading-relaxed text-left shadow-sm bg-gray-100 text-gray-800">
+                    {{ $bodyText }}
+                </div>
+            </div>
+        </div>
+
+    {{-- 3. HUMAN AGENT / ADMIN REPLIES (Right Side / Blue with Badge) --}}
+    @else
+        <div class="flex gap-3 flex-row-reverse items-start my-3">
+            <div class="w-9 h-9 bg-blue-600 text-white font-bold text-xs rounded-full flex-shrink-0 flex items-center justify-center shadow-md">
+                {{ $initials }}
+            </div>
+
+            <div class="space-y-1 flex-1 max-w-[80%] text-right">
+                <div class="flex items-center gap-2 justify-end">
+                    <span class="text-xs text-gray-400">{{ $reply->created_at ? \Carbon\Carbon::parse($reply->created_at)->format('g:i A') : '' }}</span>
+                    <h5 class="font-semibold text-sm text-gray-900">{{ $displayName }}</h5>
+                    
+                    <span class="bg-amber-100 text-amber-800 text-[11px] font-medium px-2 py-0.5 rounded-md">
+                        {{ $role === 'admin' ? 'Admin' : 'Agent' }}
+                    </span>
+                </div>
+
+                <div class="inline-block p-3.5 px-4 rounded-2xl text-sm leading-relaxed text-left shadow-sm bg-blue-600 text-white">
+                    {{ $bodyText }}
+                </div>
+            </div>
+        </div>
+    @endif
+@empty
+    <div class="text-center text-gray-400 py-8">
+        <i data-lucide="inbox" class="w-8 h-8 mx-auto stroke-1 mb-2"></i>
+        <p class="text-sm">No replies yet.</p>
+    </div>
+@endforelse
                                 </div>
-                            @endforelse
-                        </div>
-
                         <form action="{{ route('admin.support.tickets.reply', $ticket) }}" method="POST" class="p-4 border-t border-gray-100 bg-gray-50/50 space-y-3">
                             @csrf
                             <div class="flex items-start gap-3">

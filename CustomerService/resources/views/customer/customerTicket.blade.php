@@ -148,47 +148,72 @@
 
                         {{-- 2. Replies Loop --}}
                         @forelse($replies as $index => $msg)
-                            
-                            {{-- System Bot Message --}}
-                            @if($msg->sender == 'System' || str_contains($msg->message, 'Thank you for reaching out!'))
+                            @php
+                                $bodyText = $msg->message ?? $msg->body ?? '';
+                                $sender = $msg->sender ?? '';
+                                $userName = $msg->user_name ?? $msg->user->name ?? 'User';
+
+                                // 1. System / Bot Check
+                                $isBot = $sender === 'System' 
+                                      || str_contains($bodyText, 'Thank you for reaching out!')
+                                      || str_contains($bodyText, 'An agent will review it shortly');
+
+                                // 2. Customer Check
+                                $isCustomer = !$isBot && ($sender === 'Customer' || str_contains(strtolower($userName), 'customer'));
+
+                                // Initials
+                                $words = explode(' ', trim($userName));
+                                $initials = '';
+                                foreach ($words as $w) {
+                                    $initials .= strtoupper($w[0] ?? '');
+                                }
+                                $initials = substr($initials, 0, 3);
+                            @endphp
+
+                            {{-- A. SYSTEM BOT MESSAGE (CENTERED PILL) --}}
+                            @if($isBot)
                                 <div class="flex justify-center my-4">
-                                    <div class="flex items-center gap-2 bg-gray-100/80 border border-gray-200/60 text-gray-500 text-xs px-4 py-2 rounded-full shadow-sm">
+                                    <div class="flex items-center gap-2 bg-gray-100/90 border border-gray-200/80 text-gray-500 text-xs px-4 py-2 rounded-full shadow-sm">
                                         <i data-lucide="bot" class="w-3.5 h-3.5 text-gray-400"></i>
-                                        <span>{{ $msg->message }}</span>
+                                        <span>{{ $bodyText }}</span>
                                     </div>
                                 </div>
 
-                            {{-- Customer Message --}}
-                            @elseif($msg->sender == 'Customer')
-                                <div class="flex gap-4">
-                                    <div class="w-9 h-9 bg-blue-100 text-[#0f62fe] font-bold text-xs rounded-full flex items-center justify-center shadow-inner flex-shrink-0">
-                                        {{ collect(explode(' ', $msg->user_name ?? 'You'))->map(fn($n) => strtoupper(substr($n, 0, 1)))->join('') }}
-                                    </div>
-                                    <div class="space-y-1 flex-1 max-w-[80%]">
-                                        <div class="flex items-baseline gap-2 justify-start">
-                                            <h5 class="font-semibold text-sm text-gray-900">{{ $msg->user_name ?? 'You' }}</h5>
-                                            <span class="text-xs text-gray-400">{{ \Carbon\Carbon::parse($msg->sent_at)->format('M d, Y, g:i A') }}</span>
-                                        </div>
-                                        <div class="inline-block p-3 px-4 rounded-2xl text-sm leading-relaxed text-left bg-gray-100 text-gray-800 border border-gray-100">
-                                            {{ $msg->message }}
-                                        </div>
-                                    </div>
-                                </div>
-
-                            {{-- Admin / Agent Reply --}}
-                            @else
-                                <div class="flex gap-4 flex-row-reverse">
+                            {{-- B. CUSTOMER MESSAGE (RIGHT SIDE / BLUE BUBBLE) --}}
+                            @elseif($isCustomer)
+                                <div class="flex gap-4 flex-row-reverse items-start my-3">
                                     <div class="w-9 h-9 bg-blue-600 text-white font-bold text-xs rounded-full flex items-center justify-center shadow-md flex-shrink-0">
-                                        {{ collect(explode(' ', $msg->user_name ?? 'Admin User'))->map(fn($n) => strtoupper(substr($n, 0, 1)))->join('') }}
+                                        {{ substr($initials, 0, 2) }}
                                     </div>
                                     <div class="space-y-1 flex-1 max-w-[80%] text-right">
                                         <div class="flex items-baseline gap-2 justify-end">
-                                            <span class="text-xs text-gray-400">{{ \Carbon\Carbon::parse($msg->sent_at)->format('g:i A') }}</span>
-                                            <h5 class="font-semibold text-sm text-gray-900">{{ $msg->user_name ?? 'Admin User' }}</h5>
-                                            <span class="text-[10px] font-bold bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">Admin</span>
+                                            <span class="text-xs text-gray-400">
+                                                {{ $msg->sent_at ? \Carbon\Carbon::parse($msg->sent_at)->format('g:i A') : '' }}
+                                            </span>
+                                            <h5 class="font-semibold text-sm text-gray-900">{{ $userName }}</h5>
                                         </div>
-                                        <div class="inline-block p-3 px-4 rounded-2xl text-sm leading-relaxed text-left bg-blue-600 text-white border border-blue-700">
-                                            {{ $msg->message }}
+                                        <div class="inline-block p-3 px-4 rounded-2xl text-sm leading-relaxed text-left bg-blue-600 text-white shadow-sm border border-blue-700">
+                                            {{ $bodyText }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                            {{-- C. AGENT / ADMIN MESSAGE (LEFT SIDE / GRAY BUBBLE) --}}
+                            @else
+                                <div class="flex gap-4 items-start my-3">
+                                    <div class="w-9 h-9 bg-blue-100 text-[#0f62fe] font-bold text-xs rounded-full flex items-center justify-center shadow-inner flex-shrink-0">
+                                        {{ $initials }}
+                                    </div>
+                                    <div class="space-y-1 flex-1 max-w-[80%]">
+                                        <div class="flex items-baseline gap-2 justify-start">
+                                            <h5 class="font-semibold text-sm text-gray-900">{{ $userName }}</h5>
+                                            <span class="text-[10px] font-bold bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">Admin</span>
+                                            <span class="text-xs text-gray-400">
+                                                {{ $msg->sent_at ? \Carbon\Carbon::parse($msg->sent_at)->format('M d, Y, g:i A') : '' }}
+                                            </span>
+                                        </div>
+                                        <div class="inline-block p-3 px-4 rounded-2xl text-sm leading-relaxed text-left bg-gray-100 text-gray-800 border border-gray-100 shadow-sm">
+                                            {{ $bodyText }}
                                         </div>
                                     </div>
                                 </div>
