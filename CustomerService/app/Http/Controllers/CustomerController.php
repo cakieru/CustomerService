@@ -9,6 +9,7 @@ use App\Services\SlaCalculator;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Session;
+use App\Models\Order;
 
 class CustomerController extends Controller
 {
@@ -84,9 +85,13 @@ class CustomerController extends Controller
     /**
      * 3. SHOW TICKET CREATION FORM
      */
+   
+
     public function create()
     {
-        return view('customer.create');
+        $orders = Order::all(); // later you can filter by logged in customer
+    
+        return view('create', compact('orders'));
     }
 
     /**
@@ -236,28 +241,43 @@ try {
 
     $customerId = Session::get('customer_id');
 
-    if ($customerId && $ticket->user_id != $customerId) {
+    // If an admin is authenticated via normal Auth, don't impersonate the customer
+    if (!$customerId && auth()->check()) {
+        return redirect()
+            ->route('admin.support.tickets.show', $ticket)
+            ->with('error', 'Please use the admin ticket view to reply.');
+    }
+
+    if (!$customerId) {
+        return redirect()->route('login')->with('error', 'Please log in to reply.');
+    }
+
+    if ($ticket->user_id != $customerId) {
         abort(403, 'Unauthorized access to this ticket.');
     }
 
     TicketReply::create([
         'ticket_id' => $ticket->id,
-        'user_id'   => $customerId ?? 1,
+        'user_id'   => $customerId,
         'body'      => $request->body,
     ]);
 
-    // If the ticket was resolved/closed, reopen it when customer replies
+    $systemUserId = User::where('role', 'admin')->value('id') ?? $ticket->agent_id ?? $customerId;
+
+    TicketReply::create([
+        'ticket_id' => $ticket->id,
+        'user_id'   => $systemUserId,
+        'body'      => "Thank you for reaching out! We have successfully received your reply for Ticket #{$ticket->ticket_reference}. An agent will review it shortly.",
+        'is_bot'    => true,
+    ]);
+
     if (in_array($ticket->status, ['resolved', 'closed'])) {
         $ticket->update(['status' => 'open']);
     }
 
-    // Update SLA metrics
-        // Update SLA metrics
-        try {
-            SlaCalculator::updateSlaData();
-        } catch (\Exception $e) {
-            // SLA failed but reply was saved
-        }
+    try {
+        SlaCalculator::updateSlaData();
+    } catch (\Exception $e) {}
 
     return back()->with('success', 'Your reply has been sent.');
 }

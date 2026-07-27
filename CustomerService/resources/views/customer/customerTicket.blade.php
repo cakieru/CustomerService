@@ -144,44 +144,59 @@
                     </div>
 
                     <!-- Conversation Thread (moved UP before reply form) -->
-                    @forelse($replies as $index => $msg)
-                        <div class="animate-reveal-card bg-white border border-gray-200/90 rounded-3xl shadow-[0_2px_12px_rgba(0,0,0,0.01)] overflow-hidden" style="--card-index: {{ $index + 3 }};">
-                            <div class="bg-gray-50/70 px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                                <div class="flex items-center gap-3">
-                                    @if($msg->sender == 'Customer')
-                                        <div class="w-9 h-9 bg-blue-100 text-[#0f62fe] font-bold text-xs rounded-full flex items-center justify-center shadow-inner">
-                                            {{ collect(explode(' ', $msg->user_name ?? auth()->user()->name ?? 'You'))->map(fn($n) => strtoupper(substr($n, 0, 1)))->join('') }}
-                                        </div>
-                                        <h4 class="font-bold text-sm text-gray-900">{{ $msg->user_name ?? 'You' }} <span class="text-gray-400 font-medium text-xs">&mdash; You</span></h4>
-                                    @elseif($msg->sender == 'System')
-                                        <div class="w-9 h-9 bg-gray-100 text-gray-600 font-bold text-xs rounded-full flex items-center justify-center shadow-inner">
-                                            <i data-lucide="bot" class="w-4 h-4"></i>
-                                        </div>
-                                        <h4 class="font-bold text-sm text-gray-700">Support Assistant <span class="text-xs bg-gray-200 text-gray-700 font-bold px-1.5 py-0.5 rounded ml-1">Automated</span></h4>
-                                    @else
-                                        <div class="w-9 h-9 bg-purple-100 text-purple-700 font-bold text-xs rounded-full flex items-center justify-center shadow-inner">
-                                            {{ collect(explode(' ', $msg->sender))->map(fn($n) => strtoupper(substr($n, 0, 1)))->join('') }}
-                                        </div>
-                                        <h4 class="font-bold text-sm text-gray-900">{{ $msg->sender }} <span class="text-xs bg-amber-100 text-amber-800 font-bold px-1.5 py-0.5 rounded ml-1">Agent</span></h4>
-                                    @endif
-                                </div>
-                                <span class="text-xs text-gray-400 font-medium">{{ \Carbon\Carbon::parse($msg->sent_at)->format('M d, Y, g:i A') }}</span>
-                            </div>
-                            <div class="p-6 text-sm {{ $msg->sender == 'System' ? 'text-gray-500 italic bg-gray-50/30' : 'text-gray-600' }} leading-relaxed whitespace-pre-wrap">
-                                {{ $msg->message }}
-                            </div>
-                        </div>
-                    @empty
-                        <div class="animate-reveal-card bg-white border border-gray-200/90 rounded-3xl p-10 shadow-[0_2px_12px_rgba(0,0,0,0.01)] flex flex-col items-center justify-center text-center space-y-4" style="--card-index: 3;">
-                            <div class="w-12 h-12 bg-gray-50 text-gray-400 border border-gray-100 rounded-full flex items-center justify-center shadow-sm">
-                                <i data-lucide="clock" class="w-6 h-6 stroke-[1.5]"></i>
-                            </div>
-                            <div>
-                                <p class="font-bold text-sm text-gray-800">No replies yet - our team is reviewing your request.</p>
-                                <p class="text-xs text-gray-400 mt-1">You'll receive an email when we respond.</p>
-                            </div>
-                        </div>
-                    @endforelse
+                    <div class="space-y-6">
+    @forelse($replies as $index => $msg)
+        @if($msg->sender == 'System')
+            <div class="flex justify-center animate-reveal-card" style="--card-index: {{ $index + 3 }};">
+                <span class="text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full">
+                    {{ $msg->message }}
+                </span>
+            </div>
+        @elseif($msg->sender == 'Customer')
+            <div class="flex gap-4 animate-reveal-card" style="--card-index: {{ $index + 3 }};">
+                <div class="w-9 h-9 bg-blue-100 text-[#0f62fe] font-bold text-xs rounded-full flex items-center justify-center shadow-inner flex-shrink-0">
+                    {{ collect(explode(' ', $msg->user_name ?? 'You'))->map(fn($n) => strtoupper(substr($n, 0, 1)))->join('') }}
+                </div>
+                <div class="space-y-1 flex-1 max-w-[80%]">
+                    <div class="flex items-baseline gap-2 justify-start">
+                        <h5 class="font-semibold text-sm text-gray-900">{{ $msg->user_name ?? 'You' }}</h5>
+                        <span class="text-xs text-gray-400">{{ \Carbon\Carbon::parse($msg->sent_at)->format('M d, Y, g:i A') }}</span>
+                    </div>
+                    <div class="inline-block p-4 rounded-2xl text-sm leading-relaxed text-left shadow-sm bg-gray-50 text-gray-700 border border-gray-100">
+                        {{ $msg->message }}
+                    </div>
+                </div>
+            </div>
+        @else
+            {{-- Agent / Admin --}}
+            <div class="flex gap-4 flex-row-reverse animate-reveal-card" style="--card-index: {{ $index + 3 }};">
+                <div class="w-9 h-9 bg-purple-100 text-purple-700 font-bold text-xs rounded-full flex items-center justify-center shadow-inner flex-shrink-0">
+                    {{ collect(explode(' ', $msg->user_name ?? 'Agent'))->map(fn($n) => strtoupper(substr($n, 0, 1)))->join('') }}
+                </div>
+                <div class="space-y-1 flex-1 max-w-[80%] text-right">
+                    <div class="flex items-baseline gap-2 justify-end">
+                        <span class="text-xs text-gray-400">{{ \Carbon\Carbon::parse($msg->sent_at)->format('M d, Y, g:i A') }}</span>
+                        <h5 class="font-semibold text-sm text-gray-900">{{ $msg->user_name ?? 'Support Agent' }}</h5>
+                        <span class="text-[10px] font-bold bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">Agent</span>
+                    </div>
+                    <div class="inline-block p-4 rounded-2xl text-sm leading-relaxed text-left shadow-sm bg-blue-600 text-white border border-blue-700">
+                        {{ $msg->message }}
+                    </div>
+                </div>
+            </div>
+        @endif
+    @empty
+        <div class="animate-reveal-card bg-white border border-gray-200/90 rounded-3xl p-10 shadow-[0_2px_12px_rgba(0,0,0,0.01)] flex flex-col items-center justify-center text-center space-y-4" style="--card-index: 3;">
+            <div class="w-12 h-12 bg-gray-50 text-gray-400 border border-gray-100 rounded-full flex items-center justify-center shadow-sm">
+                <i data-lucide="clock" class="w-6 h-6 stroke-[1.5]"></i>
+            </div>
+            <div>
+                <p class="font-bold text-sm text-gray-800">No replies yet - our team is reviewing your request.</p>
+                <p class="text-xs text-gray-400 mt-1">You'll receive an email when we respond.</p>
+            </div>
+        </div>
+    @endforelse
+</div>
 
                     <!-- Reply Form (moved DOWN to bottom) -->
                     <!-- Reply Form -->
