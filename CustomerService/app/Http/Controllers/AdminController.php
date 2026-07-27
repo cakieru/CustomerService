@@ -165,33 +165,33 @@ class AdminController extends Controller
      * Post a reply to the ticket
      */
     public function reply(Request $request, Ticket $ticket)
-    {
-        $request->validate(['body' => 'required|string']);
+{
+    $request->validate(['body' => 'required|string']);
 
-        TicketReply::create([
-            'ticket_id' => $ticket->id,
-            'user_id' => Auth::id() ?? 1, 
-            'body' => $request->body,
-        ]);
+    TicketReply::create([
+        'ticket_id' => $ticket->id,
+        'user_id'   => Auth::id() ?? $ticket->agent_id,
+        'body'      => $request->body,
+    ]);
 
-        if ($ticket->status === 'open') {
-            $ticket->update(['status' => 'in-progress']);
-        }
-
-        if ($request->has('resolve_ticket')) {
-            $ticket->update(['status' => 'resolved']);
-        }
-
-        try {
-            SlaCalculator::updateSlaData();
-        } catch (\Exception $e) {
-            \Log::error('SLA Update failed: ' . $e->getMessage());
-        }
-
-        return redirect()
-            ->route('admin.support.tickets.show', $ticket)
-            ->with('success', 'Reply posted successfully.');
+    if ($ticket->status === 'open') {
+        $ticket->update(['status' => 'in-progress']);
     }
+
+    if ($request->has('resolve_ticket')) {
+        $ticket->update(['status' => 'resolved']);
+    }
+
+    try {
+        SlaCalculator::updateSlaData();
+    } catch (\Exception $e) {
+        \Log::error('SLA Update failed: ' . $e->getMessage());
+    }
+
+    return redirect()
+        ->route('admin.support.tickets.show', $ticket)
+        ->with('success', 'Reply posted successfully.');
+}
 
     /**
      * Resolve the ticket

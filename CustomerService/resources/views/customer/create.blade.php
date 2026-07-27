@@ -15,27 +15,15 @@
         <form action="{{ route('customer.tickets.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
             
-            <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm mb-6">
-                <h3 class="font-bold text-gray-900 mb-4 tracking-wide text-sm">YOUR INFORMATION</h3>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div>
-                        <input type="text" name="name" id="name" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent" placeholder="Enter your full name" required>
-                    </div>
-
-                    <div>
-                        <input type="email" name="email" id="email" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent" placeholder="jane06@example.com" required>
-                    </div>
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Order Number <span class="text-gray-400 font-normal">(optional)</span></label>
-                    <input type="text" name="order_number" placeholder="e.g ORD-1234" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none">
-                </div>
-            </div>
+            
 
             <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm mb-6">
                 <h3 class="font-bold text-gray-900 mb-4 tracking-wide text-sm">REQUEST DETAILS</h3>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Order Number <span class="text-gray-400 font-normal">(optional)</span></label>
+                    <input type="text" name="order_number" placeholder="e.g ORD-1234" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none">
+                </div>
                 
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Category *</label>
