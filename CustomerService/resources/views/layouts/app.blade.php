@@ -73,6 +73,17 @@
         </div>
     </main>
 
+
+    <footer class="bg-white border-t border-gray-200 py-6 px-8 flex justify-between items-center text-sm text-gray-500 mt-auto">
+        <p>&copy; 2026 Support Center. All rights reserved.</p>
+        <div class="flex space-x-6">
+            <a href="{{ route('admin.support.dashboard') }}" class="hover:text-gray-900">Agent Portal</a>
+            <a href="#" class="hover:text-gray-900">FAQ</a>
+            <a href="#" class="hover:text-gray-900">Terms</a>
+        </div>
+    </footer>
+
+
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             if (typeof lucide !== 'undefined') {
@@ -80,5 +91,6 @@
             }
         });
     </script>
+
 </body>
 </html>
